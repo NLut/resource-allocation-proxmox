@@ -9,14 +9,14 @@ export default async function UserInfo() {
             <h1>NextAuth v5</h1>
             <p>User signed in with name: {session?.user.name}</p>
             <p>User signed in with email: {session?.user.email}</p>
-            {session?.user.image && (
-                <Image
-                    src={session?.user.image}
-                    width={48}
-                    height={48}
-                    alt={session?.user.name ?? "Avatar"}
-                />
-            )}
         </div>
     );
 }
+// {session?.user.image && (
+//     <Image
+//         src={session?.user.image}
+//         width={48}
+//         height={48}
+//         alt={session?.user.name ?? "Avatar"}
+//     />
+// )}
