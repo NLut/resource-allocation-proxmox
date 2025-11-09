@@ -14,6 +14,7 @@ export default async function middleware(request: NextRequest) {
         pathname.startsWith(route),
     ); // check whether path is in protectedRoutes
 
+    // still have a bug -> will get redirect even loged in by manually routing /user-info
     if (isProtected && !session) {
         return NextResponse.redirect(new URL("/api/auth/signin", request.url));
     }
