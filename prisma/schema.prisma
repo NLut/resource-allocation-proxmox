@@ -15,122 +15,61 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model UserInfo {
-  user_id     BigInt   @id @default(autoincrement())
-  name        String   @db.VarChar(100)
-  id          String   @db.VarChar(11)
-  is_admin    Boolean
-  is_user     Boolean
-  username    String   @db.VarChar(50)
-  password    Bytes
-  gauth_token Json
+model Post {
+    id        Int      @id @default(autoincrement())
+    name      String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-  // Relations
-  requests         RequestInfo[]
-  requestEditLogs  RequestEditLog[]
-  instances        InstanceInfo[]
+    createdBy   User   @relation(fields: [createdById], references: [id])
+    createdById String
 
-  @@map("user_info")
+    @@index([name])
 }
 
-model RequestEditLog {
-  log_no     BigInt   @id @default(autoincrement())
-  user_id    BigInt
-  request_id BigInt
-  json       String   @db.VarChar(1000)
-  timestamp  DateTime
+// Necessary for Next auth
+model Account {
+    id                       String  @id @default(cuid())
+    userId                   String
+    type                     String
+    provider                 String
+    providerAccountId        String
+    refresh_token            String? // @db.Text
+    access_token             String? // @db.Text
+    expires_at               Int?
+    token_type               String?
+    scope                    String?
+    id_token                 String? // @db.Text
+    session_state            String?
+    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    refresh_token_expires_in Int?
 
-  // Relations
-  user    UserInfo    @relation(fields: [user_id], references: [user_id])
-  request RequestInfo @relation(fields: [request_id], references: [request_id])
-
-  @@map("request_edit_log")
+    @@unique([provider, providerAccountId])
 }
 
-model RequestInfo {
-  request_id         BigInt   @id @default(autoincrement())
-  user_id            BigInt
-  template_id        BigInt
-  instant_name       String   @db.VarChar(100)
-  request_status     String   @db.VarChar(20)
-  request_datetime   DateTime
-  end_datetime       DateTime
-  last_edit_datetime DateTime
-  note               String   @db.VarChar(1000)
-
-  // Relations
-  user         UserInfo           @relation(fields: [user_id], references: [user_id])
-  template     InstanceOsTemplate @relation(fields: [template_id], references: [template_id])
-  notifications NotificationInfo[]
-  editLogs     RequestEditLog[]
-  instances    InstanceInfo[]
-
-  @@map("request_info")
+model Session {
+    id           String   @id @default(cuid())
+    sessionToken String   @unique
+    userId       String
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model NotificationInfo {
-  notification_id BigInt  @id @default(autoincrement())
-  request_id      BigInt
-  send_date       DateTime @db.Date
-  is_send         Boolean
-  text            String  @db.VarChar(1000)
-
-  // Relations
-  request RequestInfo @relation(fields: [request_id], references: [request_id])
-
-  @@map("notification_info")
+model User {
+    id            String    @id @default(cuid())
+    name          String?
+    email         String?   @unique
+    emailVerified DateTime?
+    image         String?
+    accounts      Account[]
+    sessions      Session[]
+    posts         Post[]
 }
 
-model OsTemplate {
-  os_id              BigInt  @id @default(autoincrement())
-  image_location     String  @db.VarChar(100)
-  supported_platform String  @db.VarChar(50)
+model VerificationToken {
+    identifier String
+    token      String   @unique
+    expires    DateTime
 
-  // Relations
-  instanceOsTemplates InstanceOsTemplate[]
-
-  @@map("os_template")
-}
-
-model InstanceTemplate {
-  instance_id    BigInt  @id @default(autoincrement())
-  name           String  @db.VarChar(50)
-  cpu_amount     Int
-  ram_amount     Int
-  gpu_amount     Int
-  storage_amount Int
-
-  // Relations
-  instanceOsTemplates InstanceOsTemplate[]
-
-  @@map("instance_template")
-}
-
-model InstanceOsTemplate {
-  template_id BigInt @id @default(autoincrement())
-  os_id       BigInt
-  instance_id BigInt
-
-  // Relations
-  osTemplate       OsTemplate       @relation(fields: [os_id], references: [os_id])
-  instanceTemplate InstanceTemplate @relation(fields: [instance_id], references: [instance_id])
-  requests         RequestInfo[]
-
-  @@map("instance_os_template")
-}
-
-model InstanceInfo {
-  instance_id   BigInt  @id @default(autoincrement())
-  user_id       BigInt
-  request_id    BigInt
-  username      String  @db.VarChar(50)
-  password      String  @db.VarChar(50)
-  machine_state String  @db.VarChar(50)
-  ip_addr       String  @db.Inet
-
-  // Relations
-  user    UserInfo    @relation(fields: [user_id], references: [user_id])
-  request RequestInfo @relation(fields: [request_id], references: [request_id])
-
-  @@map("instance_info")
+    @@unique([identifier, token])
 }
