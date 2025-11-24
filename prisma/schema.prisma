@@ -2,74 +2,171 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
-    output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-    provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Post {
-    id        Int      @id @default(autoincrement())
-    name      String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
 
-    @@index([name])
+  @@index([name])
 }
 
 // Necessary for Next auth
 model Account {
-    id                       String  @id @default(cuid())
-    userId                   String
-    type                     String
-    provider                 String
-    providerAccountId        String
-    refresh_token            String? // @db.Text
-    access_token             String? // @db.Text
-    expires_at               Int?
-    token_type               String?
-    scope                    String?
-    id_token                 String? // @db.Text
-    session_state            String?
-    user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-    refresh_token_expires_in Int?
+  id                       String  @id @default(cuid())
+  userId                   String
+  type                     String
+  provider                 String
+  providerAccountId        String
+  refresh_token            String?
+  access_token             String?
+  expires_at               Int?
+  token_type               String?
+  scope                    String?
+  id_token                 String?
+  session_state            String?
+  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refresh_token_expires_in Int?
 
-    @@unique([provider, providerAccountId])
+  @@unique([provider, providerAccountId])
 }
 
 model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  posts         Post[]
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
+}
+
+model user_info {
+  user_id     Int        @id @default(autoincrement())
+  name        String     @db.Char(100)
+  id          String     @db.Char(11)
+  is_admin    Boolean
+  is_user     Boolean
+  username    String     @db.Char(50)
+  password    Bytes
+  gauth_token Json
+
+  // Relations
+  requests    request_info[]
+  edit_logs   request_edit_log[]
+  instances   instance_info[]
+}
+
+model request_edit_log {
+  log_no     Int      @id @default(autoincrement())
+  user_id    Int
+  request_id Int
+  json       String   @db.Char(1000)
+  timestamp  DateTime
+
+  // Relations
+  user_info    user_info    @relation(fields: [user_id], references: [user_id])
+  request_info request_info @relation(fields: [request_id], references: [request_id])
+}
+
+model request_info {
+  request_id          Int       @id @default(autoincrement())
+  user_id             Int
+  template_id         Int
+  instant_name        String    @db.Char(100)
+  request_status      String    @db.Char(20)
+  request_datetime    DateTime
+  end_datetime        DateTime
+  last_edit_datetime  DateTime
+  note                String    @db.Char(1000)
+
+  // Relations
+  user_info          user_info          @relation(fields: [user_id], references: [user_id])
+  instance_template  instance_template  @relation(fields: [template_id], references: [instance_id])
+  edit_logs          request_edit_log[]
+  notifications      notification_info[]
+  instances          instance_info[]
+}
+
+model notification_info {
+  notification_id Int      @id @default(autoincrement())
+  request_id      Int
+  send_date       DateTime @db.Date
+  is_send         Boolean
+  text            String   @db.Char(1000)
+
+  // Relations
+  request_info request_info @relation(fields: [request_id], references: [request_id])
+}
+
+model instance_template {
+  instance_id         Int      @id @default(autoincrement())
+  name                String   @db.Char(50)
+  cpu_amount          Int
+  ram_amount          Int
+  gpu_amount          Int
+  storage_amount      Int
+
+  requests            request_info[]
+  instance_os_templates instance_os_template[]
+}
+
+model os_template {
+  os_id              Int      @id @default(autoincrement())
+  image_location     String   @db.Char(100)
+  supported_platform String   @db.Char(50)
+
+  instance_os_templates instance_os_template[]
+}
+
+model instance_os_template {
+  template_id Int @id @default(autoincrement())
+  os_id       Int
+  instance_id Int
+
+  os_template       os_template       @relation(fields: [os_id], references: [os_id])
+  instance_template instance_template @relation(fields: [instance_id], references: [instance_id])
+}
+
+model instance_info {
+  instance_id   Int    @id @default(autoincrement())
+  user_id       Int
+  request_id    Int
+  username      String  @db.Char(50)
+  password      String  @db.Char(50)
+  machine_state String  @db.Char(50)
+  ip_addr       String  @db.Inet
+
+  // Relations
+  user_info    user_info    @relation(fields: [user_id], references: [user_id])
+  request_info request_info @relation(fields: [request_id], references: [request_id])
 }
