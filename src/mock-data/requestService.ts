@@ -17,7 +17,9 @@ export function getRequestById(id: string) {
   return list.find((item: any) => item.id.toString() === id.toString()) || null;
 }
 
+// ============================
 // สร้าง Request ใหม่
+// ============================
 export function saveNewRequest(payload: any) {
   const list = getRequestInstances();
 
@@ -25,6 +27,10 @@ export function saveNewRequest(payload: any) {
     id: Date.now(),
     status: "Pending",
     date: new Date().toISOString().slice(0, 10),
+
+    // ⭐ เพิ่ม Instance Name ให้รองรับ UI ใหม่
+    instanceName: payload.instanceName || payload.name || "-",
+
     ...payload,
   };
 
@@ -34,24 +40,40 @@ export function saveNewRequest(payload: any) {
   return newReq.id;
 }
 
+// ============================
 // อัปเดตสถานะของ request (Approve / Reject)
+// ============================
 export function updateRequestStatus(id: string, status: string) {
   const list = getRequestInstances();
 
   const updated = list.map((req: any) =>
-    req.id.toString() === id ? { ...req, status } : req
+    req.id.toString() === id.toString()
+      ? { ...req, status }
+      : req
   );
 
   localStorage.setItem("mockRequests", JSON.stringify(updated));
 }
 
-// ⭐⭐⭐ อัปเดตข้อมูล Request (ใช้ในหน้า Edit)
+// ============================
+// อัปเดตข้อมูล Request (ใช้ในหน้า Edit)
+// ============================
 export function updateRequest(id: string, newData: any) {
   const list = getRequestInstances();
 
   const updatedList = list.map((req: any) =>
     req.id.toString() === id.toString()
-      ? { ...req, ...newData }
+      ? {
+          ...req,
+          ...newData,
+
+          // ⭐ บังคับให้มี instanceName เสมอ
+          instanceName:
+            newData.instanceName ||
+            newData.name ||
+            req.instanceName ||
+            "-",
+        }
       : req
   );
 
@@ -73,7 +95,10 @@ export function addUserInstance(req: any) {
 
   const newInstance = {
     id: Date.now(),
-    name: req.name,
+
+    // ใช้ชื่อจาก request ที่ user กรอกไว้
+    name: req.instanceName || req.name || "Unnamed-Instance",
+
     os: req.os,
     cpu: req.spec?.cpu,
     ram: req.spec?.ram,

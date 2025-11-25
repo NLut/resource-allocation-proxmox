@@ -20,10 +20,9 @@ export default function DashboardPage() {
       const req = await getRequestInstances();
       const user = await getUserInstances();
 
-      // เอาที่ไม่ใช่ Approved
       const filteredReq = req.filter((item: any) => item.status !== "Approved");
 
-      // โชว์ 3 อันดับแรกล่าสุด
+      // แสดงเฉพาะ 3 อันดับแรก
       setRequestData(filteredReq.slice(0, 3));
       setUserInstance(user.slice(0, 3));
     }
@@ -51,8 +50,17 @@ export default function DashboardPage() {
 
       {/* NAVBAR */}
       <div className="bg-[#cfc2ff] px-6 py-4 flex items-center gap-3 shadow">
-        <Home size={26} className="text-gray-700" />
-        <span className="text-xl font-semibold text-gray-800">Home</span>
+        <Home
+          size={26}
+          className="text-gray-700 cursor-pointer"
+          onClick={() => router.push("/dashboard")}
+        />
+        <span
+          className="text-xl font-semibold text-gray-800 cursor-pointer"
+          onClick={() => router.push("/dashboard")}
+        >
+          Home
+        </span>
       </div>
 
       <div className="p-10">
@@ -63,7 +71,6 @@ export default function DashboardPage() {
             Request Instance
           </h2>
 
-          {/* ปุ่ม View (ไปหน้า request list ทั้งหมด) */}
           <button
             onClick={() => router.push("/all-requests")}
             className="px-5 py-2 bg-[#d4c5ff] hover:bg-[#bfb0ff] transition rounded-full shadow-sm text-gray-700"
@@ -72,13 +79,14 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* PREVIEW REQUEST TABLE (3 อันดับแรก) */}
+        {/* PREVIEW REQUEST TABLE */}
         <div className="bg-white rounded-3xl p-6 shadow-sm mb-12">
           <div className="max-h-64 overflow-y-auto custom-scrollbar">
             <table className="w-full border-collapse">
               <thead className="sticky top-0 bg-white">
                 <tr className="text-left text-gray-600 border-b border-purple-200">
                   <th className="pb-3">Instance ID</th>
+                  <th className="pb-3">Instance Name</th>
                   <th className="pb-3">Type</th>
                   <th className="pb-3">Date</th>
                   <th className="pb-3">Status</th>
@@ -89,6 +97,10 @@ export default function DashboardPage() {
                 {requestData.map((item) => (
                   <tr key={item.id} className="border-b border-purple-100">
                     <td className="py-4">{item.id}</td>
+
+                    {/* Instance Name */}
+                    <td>{item.name ?? "-"}</td>
+
                     <td>{item.type}</td>
                     <td>{item.date}</td>
                     <td>
@@ -120,7 +132,7 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {/* PREVIEW INSTANCE TABLE (3 อันดับแรก) */}
+        {/* PREVIEW INSTANCE TABLE */}
         <div className="bg-white rounded-3xl p-6 shadow-sm">
           <div className="max-h-64 overflow-y-auto custom-scrollbar">
             <table className="w-full border-collapse">

@@ -14,7 +14,7 @@ export default function RequestListPage() {
     async function loadData() {
       const data = await getRequestInstances();
 
-      // ❗ แสดงเฉพาะ Pending + Rejected
+      // ❗ แสดงเฉพาะ Pending + Rejected (ไม่รวม Approved)
       const filtered = data.filter((item: any) => item.status !== "Approved");
 
       setRequests(filtered);
@@ -38,8 +38,6 @@ export default function RequestListPage() {
 
       {/* ---------------- HEADER (HOME) ---------------- */}
       <div className="bg-[#d5c8ff] px-6 py-4 flex items-center gap-3 shadow">
-
-        {/* ทำให้ Home icon + text เป็นปุ่มเดียวกัน */}
         <div
           className="flex items-center gap-3 cursor-pointer"
           onClick={() => router.push("/dashboard")}
@@ -49,7 +47,6 @@ export default function RequestListPage() {
             Home
           </span>
         </div>
-
       </div>
 
       {/* ---------------- REQUEST LIST + CREATE ---------------- */}
@@ -73,6 +70,7 @@ export default function RequestListPage() {
               <thead className="sticky top-0 bg-white">
                 <tr className="text-left text-gray-600 border-b border-purple-200">
                   <th className="pb-3">Instance ID</th>
+                  <th className="pb-3">Instance Name</th>
                   <th className="pb-3">Request Type</th>
                   <th className="pb-3">Date</th>
                   <th className="pb-3">Status</th>
@@ -83,7 +81,7 @@ export default function RequestListPage() {
               <tbody>
                 {requests.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="text-center py-6 text-gray-400">
+                    <td colSpan={6} className="text-center py-6 text-gray-400">
                       No requests found.
                     </td>
                   </tr>
@@ -91,6 +89,9 @@ export default function RequestListPage() {
                   requests.map((item) => (
                     <tr key={item.id} className="border-b border-purple-100">
                       <td className="py-4">{item.id}</td>
+
+                      <td>{item.name ?? "-"}</td>
+
                       <td>{item.type}</td>
                       <td>{item.date}</td>
 
@@ -116,6 +117,7 @@ export default function RequestListPage() {
                   ))
                 )}
               </tbody>
+
             </table>
           </div>
         </div>
