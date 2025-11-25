@@ -4,6 +4,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "~/server/db";
 import { authConfig } from "./config";
 
+// auth using every where to know currnet user identity, signIn action server-side login, signOut action server-side logout terminate session cookie.
+// handlers handle incoming network traffi//
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
     adapter: PrismaAdapter(db),

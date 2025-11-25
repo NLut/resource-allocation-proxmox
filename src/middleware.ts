@@ -1,6 +1,6 @@
 // src/middleware.ts
 import NextAuth from "next-auth";
-import { authConfig } from "./server/auth/config"; // 👈 Import ONLY the config
+import { authConfig } from "./server/auth/config"; //  Import ONLY the config
 import { NextResponse } from "next/server";
 
 // 1. Initialize NextAuth with only the Edge-compatible config
