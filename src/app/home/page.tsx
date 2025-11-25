@@ -1,9 +1,17 @@
 import { auth } from "~/server/auth"; // Named import
-import Image from "next/image"; // Default import
+import Link from "next/link";
+// import Image from "next/image"; // Default import
 import { SignOutButton } from "~/component/sign-out-button";
-
 export default async function Home() {
     const session = await auth();
+    if (session?.user) {
+        return (
+            <div>
+                <Link href="/user-info"> User Info </Link>;
+                <SignOutButton />
+            </div>
+        );
+    }
     return (
         <div>
             <SignOutButton />

@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -11,55 +10,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+/**
+ * ============================================================
+ * NEXTAUTH MODELS
+ * (Standardized for Auth.js v5)
+ * ============================================================
+ */
 
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
-
-  @@index([name])
-}
-
-// Necessary for Next auth
 model Account {
-  id                       String  @id @default(cuid())
-  userId                   String
-  type                     String
-  provider                 String
-  providerAccountId        String
-  refresh_token            String?
-  access_token             String?
-  expires_at               Int?
-  token_type               String?
-  scope                    String?
-  id_token                 String?
-  session_state            String?
-  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  refresh_token_expires_in Int?
+  id                String  @id @default(cuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
   expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
-model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  posts         Post[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
 model VerificationToken {
@@ -68,105 +54,175 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
-model user_info {
-  user_id     Int        @id @default(autoincrement())
-  name        String     @db.Char(100)
-  id          String     @db.Char(11)
-  is_admin    Boolean
-  is_user     Boolean
-  username    String     @db.Char(50)
-  password    Bytes
-  gauth_token Json
+/**
+ * ============================================================
+ * USER MODEL
+ * (The bridge between Auth and Business Logic)
+ * ============================================================
+ */
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime? @map("email_verified")
+  image         String?
+  role          String    @default("user")
+  createDate    DateTime  @default(now()) @map("create_date")
+
+  // Auth Relations
+  accounts Account[]
+  sessions Session[]
+
+  // Business Relations
+  posts     Post[]
+  requests  RequestInfo[]
+  instances InstanceInfo[]
+  editLogs  RequestEditLog[]
+
+  @@map("users")
+}
+
+/**
+ * ============================================================
+ * POST MODEL
+ * ============================================================
+ */
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String @map("created_by_id")
+
+  @@index([name])
+  @@map("posts")
+}
+
+/**
+ * ============================================================
+ * BUSINESS MODELS
+ * (Refactored: BigInt -> Int, snake_case -> camelCase)
+ * ============================================================
+ */
+
+model RequestInfo {
+  // Switched to Int to prevent Next.js client crashes
+  requestId     Int      @id @default(autoincrement()) @map("request_id")
+  userId        String   @map("user_id")
+  templateId    Int      @map("template_id")
+  instantName   String   @map("instant_name")
+  requestStatus String   @map("request_status")
+  requestDate   DateTime @map("request_datetime")
+  endDate       DateTime @map("end_datetime")
+  lastEditDate  DateTime @map("last_edit_datetime")
+  note          String
+  isApprove     Boolean  @map("is_approve")
 
   // Relations
-  requests    request_info[]
-  edit_logs   request_edit_log[]
-  instances   instance_info[]
+  user          User               @relation(fields: [userId], references: [id])
+  template      InstanceTemplate   @relation(fields: [templateId], references: [instanceId])
+  notifications NotificationInfo[]
+  editLogs      RequestEditLog[]
+  instances     InstanceInfo[]
+
+  @@index([userId])
+  @@index([templateId])
+  @@map("request_info")
 }
 
-model request_edit_log {
-  log_no     Int      @id @default(autoincrement())
-  user_id    Int
-  request_id Int
-  json       String   @db.Char(1000)
-  timestamp  DateTime
+model RequestEditLog {
+  logNo     Int      @id @default(autoincrement()) @map("log_no")
+  userId    String   @map("user_id")
+  requestId Int      @map("request_id")
+  jsonData  Json     @map("json") // Changed String -> Json
+  timestamp DateTime
 
-  // Relations
-  user_info    user_info    @relation(fields: [user_id], references: [user_id])
-  request_info request_info @relation(fields: [request_id], references: [request_id])
+  user    User        @relation(fields: [userId], references: [id])
+  request RequestInfo @relation(fields: [requestId], references: [requestId])
+
+  @@index([userId])
+  @@index([requestId])
+  @@map("request_edit_log")
 }
 
-model request_info {
-  request_id          Int       @id @default(autoincrement())
-  user_id             Int
-  template_id         Int
-  instant_name        String    @db.Char(100)
-  request_status      String    @db.Char(20)
-  request_datetime    DateTime
-  end_datetime        DateTime
-  last_edit_datetime  DateTime
-  note                String    @db.Char(1000)
+model InstanceTemplate {
+  instanceId    Int    @id @default(autoincrement()) @map("instance_id")
+  name          String
+  cpuAmount     Int    @map("cpu_amount")
+  ramAmount     Int    @map("ram_amount")
+  gpuAmount     Int    @map("gpu_amount")
+  storageAmount Int    @map("storage_amount")
 
-  // Relations
-  user_info          user_info          @relation(fields: [user_id], references: [user_id])
-  instance_template  instance_template  @relation(fields: [template_id], references: [instance_id])
-  edit_logs          request_edit_log[]
-  notifications      notification_info[]
-  instances          instance_info[]
+  osTemplates InstanceOsTemplate[]
+  requests    RequestInfo[]
+
+  @@map("instance_template")
 }
 
-model notification_info {
-  notification_id Int      @id @default(autoincrement())
-  request_id      Int
-  send_date       DateTime @db.Date
-  is_send         Boolean
-  text            String   @db.Char(1000)
+model OsTemplate {
+  osId              Int    @id @default(autoincrement()) @map("os_id")
+  osName            String @map("os_name")
+  imageLocation     String @map("image_location")
+  supportedPlatform String @map("supported_platform")
 
-  // Relations
-  request_info request_info @relation(fields: [request_id], references: [request_id])
+  instancesOs InstanceOsTemplate[]
+
+  @@map("os_template")
 }
 
-model instance_template {
-  instance_id         Int      @id @default(autoincrement())
-  name                String   @db.Char(50)
-  cpu_amount          Int
-  ram_amount          Int
-  gpu_amount          Int
-  storage_amount      Int
+model InstanceOsTemplate {
+  templateId Int @id @default(autoincrement()) @map("template_id")
+  osId       Int @map("os_id")
+  instanceId Int @map("instance_id")
 
-  requests            request_info[]
-  instance_os_templates instance_os_template[]
+  osTemplate OsTemplate       @relation(fields: [osId], references: [osId])
+  instance   InstanceTemplate @relation(fields: [instanceId], references: [instanceId])
+
+  @@index([osId])
+  @@index([instanceId])
+  @@map("instance_os_template")
 }
 
-model os_template {
-  os_id              Int      @id @default(autoincrement())
-  image_location     String   @db.Char(100)
-  supported_platform String   @db.Char(50)
+model InstanceInfo {
+  instanceId   Int      @id @default(autoincrement()) @map("instance_id")
+  userId       String   @map("user_id")
+  requestId    Int      @map("request_id")
+  username     String
+  password     String
+  machineState String   @map("machine_state")
+  ipAddr       String   @map("ip_addr")
+  createDate   DateTime @map("create_date")
+  expireDate   DateTime @map("expire_date")
 
-  instance_os_templates instance_os_template[]
+  // FIX: This must be String to hold a User ID (CUID)
+  updateBy   String   @map("update_by")
+  updateDate DateTime @map("update_date")
+
+  user    User        @relation(fields: [userId], references: [id])
+  request RequestInfo @relation(fields: [requestId], references: [requestId])
+
+  @@index([userId])
+  @@index([requestId])
+  @@map("instance_info")
 }
 
-model instance_os_template {
-  template_id Int @id @default(autoincrement())
-  os_id       Int
-  instance_id Int
+model NotificationInfo {
+  notificationId Int      @id @default(autoincrement()) @map("notification_id")
+  requestId      Int      @map("request_id")
+  sendDate       DateTime @map("send_date")
+  isSend         Boolean  @map("is_send")
+  messageSubject String   @map("message_subject")
+  message        String
 
-  os_template       os_template       @relation(fields: [os_id], references: [os_id])
-  instance_template instance_template @relation(fields: [instance_id], references: [instance_id])
-}
+  request RequestInfo @relation(fields: [requestId], references: [requestId])
 
-model instance_info {
-  instance_id   Int    @id @default(autoincrement())
-  user_id       Int
-  request_id    Int
-  username      String  @db.Char(50)
-  password      String  @db.Char(50)
-  machine_state String  @db.Char(50)
-  ip_addr       String  @db.Inet
-
-  // Relations
-  user_info    user_info    @relation(fields: [user_id], references: [user_id])
-  request_info request_info @relation(fields: [request_id], references: [request_id])
+  @@index([requestId])
+  @@map("notification_info")
 }
