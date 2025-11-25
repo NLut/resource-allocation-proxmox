@@ -1,0 +1,4 @@
+[00:01:37.843] Server  ERROR   Error: ENOENT: no such file or directory, scandir '/Users/ryuto00/resource-allocation-proxmox/Frontend/app'
+[00:01:37.844] Server  ERROR    ⨯ "unhandledRejection:" Error: ENOENT: no such file or directory, scandir '/Users/ryuto00/resource-allocation-proxmox/Frontend/app'
+[00:01:37.845] Server  ERROR    ⨯ "unhandledRejection: " Error: ENOENT: no such file or directory, scandir '/Users/ryuto00/resource-allocation-proxmox/Frontend/app'
+[00:01:37.877] Server  LOG      ✓ Compiled in 220ms
