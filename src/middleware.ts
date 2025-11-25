@@ -1,24 +1,31 @@
+// src/middleware.ts
+import NextAuth from "next-auth";
+import { authConfig } from "./server/auth/config"; //  Import ONLY the config
 import { NextResponse } from "next/server";
-import { type NextRequest } from "next/server";
-import { auth } from "./server/auth";
 
-// intercepter
+// 1. Initialize NextAuth with only the Edge-compatible config
+const { auth } = NextAuth(authConfig);
+
 const protectedRoutes = ["/user-info"];
 
-export default async function middleware(request: NextRequest) {
-    const session = await auth();
-
-    const { pathname } = request.nextUrl; // get current url
+// 2. Wrap your middleware in the `auth` wrapper
+export default auth((req) => {
+    const { nextUrl } = req;
+    const isLoggedIn = !!req.auth; // `req.auth` is provided by the wrapper
 
     const isProtected = protectedRoutes.some((route) =>
-        pathname.startsWith(route),
-    ); // check whether path is in protectedRoutes
+        nextUrl.pathname.startsWith(route),
+    );
 
-    // still have a bug -> will get redirect even loged in by manually routing /user-info
-    if (isProtected && !session) {
-        return NextResponse.redirect(new URL("/api/auth/signin", request.url));
+    // 3. Logic: If trying to access protected route and not logged in
+    if (isProtected && !isLoggedIn) {
+        return NextResponse.redirect(new URL("/api/auth/signin", nextUrl));
     }
 
-    // user is sign in or not in protected routes
-    return NextResponse.next(); // continue forward to that route
-}
+    return NextResponse.next();
+});
+
+// 4. Matcher configuration
+export const config = {
+    matcher: ["/((?!api|_next/static|_next/image|.*\\.png$).*)"],
+};
