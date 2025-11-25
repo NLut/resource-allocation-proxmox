@@ -127,7 +127,7 @@ model RequestInfo {
 
   // Relations
   user          User               @relation(fields: [userId], references: [id])
-  template      InstanceTemplate   @relation(fields: [templateId], references: [instanceId])
+  template      InstanceOsTemplate @relation(fields: [templateId], references: [templateId]) // Points to the Combo
   notifications NotificationInfo[]
   editLogs      RequestEditLog[]
   instances     InstanceInfo[]
@@ -161,7 +161,6 @@ model InstanceTemplate {
   storageAmount Int    @map("storage_amount")
 
   osTemplates InstanceOsTemplate[]
-  requests    RequestInfo[]
 
   @@map("instance_template")
 }
@@ -184,6 +183,7 @@ model InstanceOsTemplate {
 
   osTemplate OsTemplate       @relation(fields: [osId], references: [osId])
   instance   InstanceTemplate @relation(fields: [instanceId], references: [instanceId])
+  requests RequestInfo[]
 
   @@index([osId])
   @@index([instanceId])
