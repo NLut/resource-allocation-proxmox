@@ -1,10 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
   const handleGoogleLogin = () => {
-    console.log("Google login clicked");
+    signIn("google", {
+      callbackUrl: "/dashboard",
+    });
   };
 
   return (
