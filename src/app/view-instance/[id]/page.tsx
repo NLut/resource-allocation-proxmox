@@ -9,8 +9,18 @@ export default function ViewInstancePage() {
   const params = useParams();
   const router = useRouter();
 
-  const instanceId: string =
-    Array.isArray(params.id) ? params.id[0] : params.id || "";
+  const rawId = params.id;
+
+  let instanceId: string;
+
+  if (typeof rawId === "string") {
+    instanceId = rawId;
+  } else if (Array.isArray(rawId)) {
+    instanceId = rawId[0] ?? "";
+  } else {
+    instanceId = "";
+  }
+
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);

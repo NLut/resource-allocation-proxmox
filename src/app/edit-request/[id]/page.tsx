@@ -14,8 +14,7 @@ import { updateRequest } from "../../../mock-data/requestService"; // ⭐ เพ
 
 export default function EditRequestPage() {
   const router = useRouter();
-  const params = useParams();
-
+  const params = useParams<{ id: string }>();
   const requestId: string = Array.isArray(params.id)
     ? params.id[0]
     : (params.id as string);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Home, Plus } from "lucide-react";
+import { Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { 
@@ -20,13 +20,12 @@ export default function DashboardPage() {
       const req = await getRequestInstances();
       const user = await getUserInstances();
 
-      // ⭐ แก้ตรงนี้: เอาเฉพาะ Pending + Rejected (ไม่เอา Approved)
-      const filteredReq = req.filter(
-        (item: any) => item.status !== "Approved"
-      );
+      // เอาที่ไม่ใช่ Approved
+      const filteredReq = req.filter((item: any) => item.status !== "Approved");
 
-      setRequestData(filteredReq);
-      setUserInstance(user);
+      // โชว์ 3 อันดับแรกล่าสุด
+      setRequestData(filteredReq.slice(0, 3));
+      setUserInstance(user.slice(0, 3));
     }
     loadData();
   }, []);
@@ -35,15 +34,13 @@ export default function DashboardPage() {
     switch (status) {
       case "Pending":
         return "bg-yellow-200 text-gray-800";
-      case "Approved":         // ใช้ตรงกับ updateRequestStatus(..., "Approved")
-      case "Approve":          // กันกรณีเขียนผิดมาจาก backend
+      case "Approved":
+      case "Approve":
         return "bg-green-200 text-gray-800";
       case "Rejected":
         return "bg-red-200 text-gray-800";
       case "On":
         return "bg-green-200 text-gray-800";
-      case "OFF":
-        return "bg-gray-300 text-gray-800";
       default:
         return "bg-gray-200 text-gray-800";
     }
@@ -66,66 +63,43 @@ export default function DashboardPage() {
             Request Instance
           </h2>
 
-          {/* กดแล้วไปหน้า create-request */}
+          {/* ปุ่ม View (ไปหน้า request list ทั้งหมด) */}
           <button
-            onClick={() => router.push("/create-request")}
-            className="flex items-center gap-2 px-5 py-2 bg-[#d4c5ff] hover:bg-[#bfb0ff] transition rounded-full shadow-sm"
+            onClick={() => router.push("/all-requests")}
+            className="px-5 py-2 bg-[#d4c5ff] hover:bg-[#bfb0ff] transition rounded-full shadow-sm text-gray-700"
           >
-            <Plus size={20} />
-            <span className="text-gray-700 font-medium">Create</span>
+            View
           </button>
         </div>
 
-        {/* REQUEST TABLE */}
+        {/* PREVIEW REQUEST TABLE (3 อันดับแรก) */}
         <div className="bg-white rounded-3xl p-6 shadow-sm mb-12">
           <div className="max-h-64 overflow-y-auto custom-scrollbar">
             <table className="w-full border-collapse">
               <thead className="sticky top-0 bg-white">
                 <tr className="text-left text-gray-600 border-b border-purple-200">
                   <th className="pb-3">Instance ID</th>
-                  <th className="pb-3">Request Type</th>
+                  <th className="pb-3">Type</th>
                   <th className="pb-3">Date</th>
                   <th className="pb-3">Status</th>
-                  <th></th>
                 </tr>
               </thead>
-              
+
               <tbody>
-                {requestData.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="text-center py-6 text-gray-400"
-                    >
-                      No requests found.
+                {requestData.map((item) => (
+                  <tr key={item.id} className="border-b border-purple-100">
+                    <td className="py-4">{item.id}</td>
+                    <td>{item.type}</td>
+                    <td>{item.date}</td>
+                    <td>
+                      <span
+                        className={`px-4 py-1 rounded-full text-sm ${badgeStyle(item.status)}`}
+                      >
+                        {item.status}
+                      </span>
                     </td>
                   </tr>
-                ) : (
-                  requestData.map((item) => (
-                    <tr key={item.id} className="border-b border-purple-100">
-                      <td className="py-4">{item.id}</td>
-                      <td>{item.type}</td>
-                      <td>{item.date}</td>
-                      <td>
-                        <span
-                          className={`px-4 py-1 rounded-full text-sm ${badgeStyle(
-                            item.status
-                          )}`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => router.push(`/edit-request/${item.id}`)}
-                          className="px-4 py-1 bg-[#bdb7d3] hover:bg-[#a9a3c4] transition rounded-full text-gray-700"
-                        >
-                          Edit
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
 
             </table>
@@ -133,8 +107,20 @@ export default function DashboardPage() {
         </div>
 
         {/* USER INSTANCE */}
-        <h2 className="text-3xl font-semibold text-gray-800 mb-5">User Instance</h2>
+        <div className="flex justify-between items-center mb-5">
+          <h2 className="text-3xl font-semibold text-gray-800">
+            User Instance
+          </h2>
 
+          <button
+            onClick={() => router.push("/all-instances")}
+            className="px-5 py-2 bg-[#d4c5ff] hover:bg-[#bfb0ff] transition rounded-full shadow-sm text-gray-700"
+          >
+            View
+          </button>
+        </div>
+
+        {/* PREVIEW INSTANCE TABLE (3 อันดับแรก) */}
         <div className="bg-white rounded-3xl p-6 shadow-sm">
           <div className="max-h-64 overflow-y-auto custom-scrollbar">
             <table className="w-full border-collapse">
@@ -145,47 +131,25 @@ export default function DashboardPage() {
                   <th className="pb-3">CPU</th>
                   <th className="pb-3">RAM</th>
                   <th className="pb-3">Status</th>
-                  <th></th>
                 </tr>
               </thead>
 
               <tbody>
-                {userInstance.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="text-center py-6 text-gray-400"
-                    >
-                      No instances found.
+                {userInstance.map((item) => (
+                  <tr key={item.name} className="border-b border-purple-100">
+                    <td className="py-4">{item.name}</td>
+                    <td>{item.os}</td>
+                    <td>{item.cpu}</td>
+                    <td>{item.ram}</td>
+                    <td>
+                      <span
+                        className={`px-4 py-1 rounded-full text-sm ${badgeStyle(item.status)}`}
+                      >
+                        {item.status}
+                      </span>
                     </td>
                   </tr>
-                ) : (
-                  userInstance.map((item) => (
-                    <tr key={item.name} className="border-b border-purple-100">
-                      <td className="py-4">{item.name}</td>
-                      <td>{item.os}</td>
-                      <td>{item.cpu}</td>
-                      <td>{item.ram}</td>
-                      <td>
-                        <span
-                          className={`px-4 py-1 rounded-full text-sm ${badgeStyle(
-                            item.status
-                          )}`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => router.push(`/view-instance/${item.id}`)}
-                          className="px-4 py-1 bg-[#bdb7d3] hover:bg-[#a9a3c4] transition rounded-full text-gray-700"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
 
             </table>

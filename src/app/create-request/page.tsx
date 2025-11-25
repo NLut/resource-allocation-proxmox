@@ -33,7 +33,7 @@ export default function CreateRequestPage() {
       setOsOptions(os);
       setSpecOptions(spec);
 
-      setSelectedOS(os[0]);
+      setSelectedOS(os[0] ?? "");
       setSelectedSpec(spec[0]);
     }
 
