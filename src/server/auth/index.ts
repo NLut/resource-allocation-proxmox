@@ -16,7 +16,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user) {
                 token.id = user.id;
                 // We cast 'role' to string/any because TS might not know it exists on 'User' yet
-                // token.role = (user as any).role;
+                token.role = (user as any).role;
             }
             return token;
         },
