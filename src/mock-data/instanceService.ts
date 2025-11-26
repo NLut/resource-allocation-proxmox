@@ -8,23 +8,31 @@ export function getUserInstances() {
   return JSON.parse(localStorage.getItem("userInstances") || "[]");
 }
 
+// เพิ่ม Instance เมื่อ Admin กด Approve
 export function addUserInstance(req: any) {
+  if (!req) return null; // ⭐ ป้องกัน crash ถ้า req undefined
+
   const list = getUserInstances();
 
+  // สร้าง username auto
   const newUsername = "demo" + (list.length + 1);
-  const newPassword = generateRandomPassword(8); // ⭐ ใช้ฟังก์ชันสุ่มรหัส
+  const newPassword = generateRandomPassword(8);
 
   const newInstance = {
     id: Date.now(),
-    name: req.name,
+
+    // ⭐ รองรับ instanceName จาก requestService
+    name: req.instanceName || req.name || "Unnamed-Instance",
+
     os: req.os,
-    cpu: req.spec.cpu,
-    ram: req.spec.ram,
-    storage: req.spec.storage,
+    cpu: req.spec?.cpu || req.cpu,
+    ram: req.spec?.ram || req.ram,
+    storage: req.spec?.storage || req.storage,
+
     status: "On",
 
     username: newUsername,
-    password: newPassword, // ⭐ ใส่รหัสผ่านแบบสุ่ม
+    password: newPassword,
 
     startDate: req.startDate,
     endDate: req.endDate,
@@ -32,6 +40,8 @@ export function addUserInstance(req: any) {
 
   list.push(newInstance);
   localStorage.setItem("userInstances", JSON.stringify(list));
+
+  return newInstance; // ⭐ ดีต่อการ debug และต่อยอด
 }
 
 // อัปเดตสถานะของ instance (ON/OFF)
@@ -52,8 +62,11 @@ export function getInstanceById(id: string) {
   const list = getUserInstances();
   return list.find((item: any) => item.id.toString() === id.toString()) || null;
 }
+
+// สุ่มรหัสผ่าน
 function generateRandomPassword(length = 8) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let password = "";
   for (let i = 0; i < length; i++) {
     password += chars.charAt(Math.floor(Math.random() * chars.length));
