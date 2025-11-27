@@ -9,11 +9,12 @@ export async function GET() {
     if (session?.user.role !== "admin") {
         return new NextResponse("Forbidden", { status: 403 });
     }
+    // console.log(session?.user.role);
 
     try {
         const pendingRequests = await db.requestInfo.findMany({
             where: {
-                requestStatus: "pending", // 👈 Filter only pending
+                requestStatus: "pending", //  Filter only pending
                 isApprove: false,
             },
             include: {
