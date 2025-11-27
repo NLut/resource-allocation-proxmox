@@ -121,14 +121,6 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.PostScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  createdById: 'createdById'
-};
-
 exports.Prisma.AccountScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -141,8 +133,7 @@ exports.Prisma.AccountScalarFieldEnum = {
   token_type: 'token_type',
   scope: 'scope',
   id_token: 'id_token',
-  session_state: 'session_state',
-  refresh_token_expires_in: 'refresh_token_expires_in'
+  session_state: 'session_state'
 };
 
 exports.Prisma.SessionScalarFieldEnum = {
@@ -152,23 +143,103 @@ exports.Prisma.SessionScalarFieldEnum = {
   expires: 'expires'
 };
 
-exports.Prisma.UserScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  email: 'email',
-  emailVerified: 'emailVerified',
-  image: 'image'
-};
-
 exports.Prisma.VerificationTokenScalarFieldEnum = {
   identifier: 'identifier',
   token: 'token',
   expires: 'expires'
 };
 
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  emailVerified: 'emailVerified',
+  image: 'image',
+  role: 'role',
+  createDate: 'createDate'
+};
+
+exports.Prisma.PostScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdById: 'createdById'
+};
+
+exports.Prisma.RequestInfoScalarFieldEnum = {
+  requestId: 'requestId',
+  userId: 'userId',
+  templateId: 'templateId',
+  instantName: 'instantName',
+  requestStatus: 'requestStatus',
+  requestDate: 'requestDate',
+  endDate: 'endDate',
+  lastEditDate: 'lastEditDate',
+  note: 'note',
+  isApprove: 'isApprove'
+};
+
+exports.Prisma.RequestEditLogScalarFieldEnum = {
+  logNo: 'logNo',
+  userId: 'userId',
+  requestId: 'requestId',
+  jsonData: 'jsonData',
+  timestamp: 'timestamp'
+};
+
+exports.Prisma.InstanceTemplateScalarFieldEnum = {
+  instanceId: 'instanceId',
+  name: 'name',
+  cpuAmount: 'cpuAmount',
+  ramAmount: 'ramAmount',
+  gpuAmount: 'gpuAmount',
+  storageAmount: 'storageAmount'
+};
+
+exports.Prisma.OsTemplateScalarFieldEnum = {
+  osId: 'osId',
+  osName: 'osName',
+  imageLocation: 'imageLocation',
+  supportedPlatform: 'supportedPlatform'
+};
+
+exports.Prisma.InstanceOsTemplateScalarFieldEnum = {
+  templateId: 'templateId',
+  osId: 'osId',
+  instanceId: 'instanceId'
+};
+
+exports.Prisma.InstanceInfoScalarFieldEnum = {
+  instanceId: 'instanceId',
+  userId: 'userId',
+  requestId: 'requestId',
+  username: 'username',
+  password: 'password',
+  machineState: 'machineState',
+  ipAddr: 'ipAddr',
+  createDate: 'createDate',
+  expireDate: 'expireDate',
+  updateBy: 'updateBy',
+  updateDate: 'updateDate'
+};
+
+exports.Prisma.NotificationInfoScalarFieldEnum = {
+  notificationId: 'notificationId',
+  requestId: 'requestId',
+  sendDate: 'sendDate',
+  isSend: 'isSend',
+  messageSubject: 'messageSubject',
+  message: 'message'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -181,13 +252,26 @@ exports.Prisma.NullsOrder = {
   last: 'last'
 };
 
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
 
 exports.Prisma.ModelName = {
-  Post: 'Post',
   Account: 'Account',
   Session: 'Session',
+  VerificationToken: 'VerificationToken',
   User: 'User',
-  VerificationToken: 'VerificationToken'
+  Post: 'Post',
+  RequestInfo: 'RequestInfo',
+  RequestEditLog: 'RequestEditLog',
+  InstanceTemplate: 'InstanceTemplate',
+  OsTemplate: 'OsTemplate',
+  InstanceOsTemplate: 'InstanceOsTemplate',
+  InstanceInfo: 'InstanceInfo',
+  NotificationInfo: 'NotificationInfo'
 };
 
 /**
