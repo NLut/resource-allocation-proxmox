@@ -4,29 +4,18 @@ import { useEffect, useState } from "react";
 import { Home, ChevronDown, Calendar } from "lucide-react";
 import { useRouter, useParams } from "next/navigation";
 
-import {
-  getOSOptions,
-  getSpecOptions,
-  getRequestById,
-} from "../../../mock-data/createService";
-
-import { updateRequest } from "../../../mock-data/requestService"; // ⭐ เพิ่มอันนี้
-
 export default function EditRequestPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
-  const requestId: string = Array.isArray(params.id)
-    ? params.id[0]
-    : (params.id as string);
+  const requestId = params.id;
 
-  const [osOptions, setOsOptions] = useState<string[]>([]);
+  const [osOptions, setOsOptions] = useState<any[]>([]);
   const [specOptions, setSpecOptions] = useState<any[]>([]);
 
   const [instanceName, setInstanceName] = useState("");
-  const [selectedOS, setSelectedOS] = useState("");
-  const [selectedSpec, setSelectedSpec] = useState<any | null>(null);
+  const [selectedOS, setSelectedOS] = useState<any>(null);
+  const [selectedSpec, setSelectedSpec] = useState<any>(null);
 
-  const [enableGPU, setEnableGPU] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -35,29 +24,47 @@ export default function EditRequestPage() {
   useEffect(() => {
     async function load() {
       try {
-        const os = await getOSOptions();
-        const specs = await getSpecOptions();
-        const req = await getRequestById(requestId);
+        // ========== 1) โหลด template ==========
+        const templateRes = await fetch("/api/templates");
+        const templateData = await templateRes.json();
 
-        setOsOptions(os);
-        setSpecOptions(specs);
+        const osList = templateData.osTemplates.map((item: any) => ({
+          id: item.osId ?? item.id,
+          name: item.osName,
+        }));
 
-        // Autofill
-        setInstanceName(req.name || "");
-        setSelectedOS(req.os);
+        const specList = templateData.instanceTemplates.map((item: any) => ({
+          id: item.instanceId ?? item.id,
+          name: item.name,
+          cpu: item.cpu,
+          ram: item.ram,
+          storage: item.storage,
+        }));
 
-        const matchedSpec =
-          specs.find((s) => s.name === req.spec?.name) ||
-          specs.find((s) => s.name === req.spec) ||
-          null;
+        setOsOptions(osList);
+        setSpecOptions(specList);
 
-        setSelectedSpec(matchedSpec);
+        // ========== 2) โหลด request ==========
+        const reqRes = await fetch(`/api/requests/${requestId}`);   // ⭐ FIXED URL
+        const req = await reqRes.json();
 
-        setEnableGPU(req.gpu);
-        setStartDate(req.startDate);
-        setEndDate(req.endDate);
-      } catch (err) {
-        console.error("Error loading edit data:", err);
+        setInstanceName(req.instantName);
+        setStartDate(req.requestDate.split("T")[0]);
+        setEndDate(req.endDate?.split("T")[0] || "");
+
+        // Auto-fill OS
+        const foundOS = osList.find(
+          (o: any) => o.id === req.template?.osTemplate?.osId
+        );
+        setSelectedOS(foundOS || osList[0]);
+
+        // Auto-fill SPEC
+        const foundSpec = specList.find(
+          (s: any) => s.id === req.template?.instance?.instanceId
+        );
+        setSelectedSpec(foundSpec || specList[0]);
+      } catch (error) {
+        console.error("Load edit error:", error);
       } finally {
         setLoading(false);
       }
@@ -68,27 +75,27 @@ export default function EditRequestPage() {
 
   if (loading) return <div className="p-10 text-xl">Loading...</div>;
 
-  // ⭐ ฟังก์ชัน Save Edit
+  // ========== Save ==========
   const handleSave = async () => {
-    const updatedRequest = {
-      name: instanceName,
-      os: selectedOS,
-      spec: selectedSpec,
-      gpu: enableGPU,
+    const payload = {
+      instanceName,
+      osId: selectedOS.id,
+      instanceId: selectedSpec.id,
       startDate,
       endDate,
-      status: "Pending",          // ใส่ถ้าต้องการ reset
     };
 
-    await updateRequest(requestId, updatedRequest);
+    await fetch(`/api/requests/${requestId}`, {  // ⭐ FIXED URL
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
     router.push("/dashboard");
   };
 
   return (
     <div className="min-h-screen bg-[#f4f2ff]">
-
-      {/* NAVBAR */}
       <div className="w-full bg-[#cfc2ff] px-8 py-4 flex items-center gap-3 shadow">
         <Home size={26} className="text-gray-700" />
         <span
@@ -100,33 +107,32 @@ export default function EditRequestPage() {
       </div>
 
       <div className="px-16 pt-12 pb-10">
-
         <h1 className="text-4xl font-semibold text-gray-900 mb-10">
           Edit Request #{requestId}
         </h1>
 
         <div className="bg-[#e8defc] px-12 py-12 rounded-3xl shadow-xl w-full max-w-5xl mx-auto">
-
-          {/* INSTANCE NAME */}
+          {/* Name */}
           <p className="text-2xl font-semibold text-gray-900 mb-3">Instance Name</p>
           <input
-            type="text"
+            className="w-full bg-white px-6 py-4 rounded-xl shadow-md mb-10 text-lg"
             value={instanceName}
             onChange={(e) => setInstanceName(e.target.value)}
-            className="w-full bg-white text-gray-700 px-6 py-4 rounded-xl shadow-md mb-10 text-lg"
           />
 
           {/* OS */}
           <p className="text-2xl font-semibold text-gray-900 mb-3">Operation System</p>
           <div className="relative mb-10">
             <select
-              value={selectedOS}
-              onChange={(e) => setSelectedOS(e.target.value)}
-              className="w-full bg-white text-gray-700 px-6 py-4 rounded-xl shadow-md appearance-none text-lg"
+              value={selectedOS?.id}
+              onChange={(e) =>
+                setSelectedOS(osOptions.find((o) => o.id === Number(e.target.value)))
+              }
+              className="w-full bg-white px-6 py-4 rounded-xl shadow-md text-lg"
             >
-              {osOptions.map((os) => (
-                <option key={os} value={os}>
-                  {os}
+              {osOptions.map((os, i) => (
+                <option key={os.id ?? i} value={os.id}>
+                  {os.name}
                 </option>
               ))}
             </select>
@@ -134,67 +140,51 @@ export default function EditRequestPage() {
           </div>
 
           {/* SPEC */}
-          <p className="text-2xl font-semibold text-gray-900 mb-3">Spec:</p>
+          <p className="text-2xl font-semibold text-gray-900 mb-3">Spec</p>
           <div className="relative mb-10">
             <select
-              value={selectedSpec?.name}
+              value={selectedSpec?.id}
               onChange={(e) =>
-                setSelectedSpec(specOptions.find((s) => s.name === e.target.value)!)
+                setSelectedSpec(
+                  specOptions.find((s) => s.id === Number(e.target.value))
+                )
               }
-              className="w-full bg-white text-gray-700 px-6 py-4 rounded-xl shadow-md appearance-none text-lg"
+              className="w-full bg-white px-6 py-4 rounded-xl shadow-md text-lg"
             >
-              {specOptions.map((spec) => (
-                <option key={spec.name} value={spec.name}>
-                  {spec.name} — {spec.cpu} — {spec.ram} — {spec.storage}
+              {specOptions.map((spec, i) => (
+                <option key={spec.id ?? i} value={spec.id}>
+                  {spec.name} — {spec.cpu} CPU — {spec.ram} RAM — {spec.storage} GB
                 </option>
               ))}
             </select>
             <ChevronDown className="absolute right-5 top-4 text-gray-500" />
           </div>
 
-          {/* GPU */}
-          <div className="flex items-center gap-3 mb-10">
-            <input
-              type="checkbox"
-              checked={enableGPU}
-              onChange={() => setEnableGPU(!enableGPU)}
-              className="w-6 h-6"
-            />
-            <label className="text-xl text-gray-900">Enable GPU</label>
-          </div>
-
-          {/* DATE */}
+          {/* Dates */}
           <div className="grid grid-cols-2 gap-8 mb-12">
-            <div className="relative">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-6 py-4 bg-white rounded-xl shadow-md text-gray-700 text-lg"
-              />
-              <Calendar className="absolute right-5 top-4 text-gray-500" />
-            </div>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="px-6 py-4 bg-white rounded-xl shadow-md text-lg"
+            />
 
-            <div className="relative">
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-6 py-4 bg-white rounded-xl shadow-md text-gray-700 text-lg"
-              />
-              <Calendar className="absolute right-5 top-4 text-gray-500" />
-            </div>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="px-6 py-4 bg-white rounded-xl shadow-md text-lg"
+            />
           </div>
 
           <div className="flex justify-end">
             <button
-              onClick={handleSave}     // ⭐ ผูกกับ handleSave
-              className="px-14 py-4 bg-[#7d5fff] hover:bg-[#6d52f7] transition rounded-full text-white text-xl font-medium shadow-lg"
+              onClick={handleSave}
+              className="px-14 py-4 bg-[#7d5fff] text-white rounded-full text-xl shadow-lg"
             >
               Save Edit
             </button>
           </div>
-
         </div>
       </div>
     </div>
