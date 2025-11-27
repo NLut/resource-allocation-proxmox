@@ -11,10 +11,27 @@ export async function GET() {
     }
 
     try {
-        // 2. Fetch Active Instances for this user
+        // 2. Fetch Active Instances with Deep Nested Data
         const userInstances = await db.instanceInfo.findMany({
             where: {
                 userId: session.user.id,
+            },
+            // The magic happens here: Walking the relations
+            include: {
+                request: {
+                    include: {
+                        template: {
+                            // This is the InstanceOsTemplate
+                            include: {
+                                osTemplate: true, // Gets OS Name
+                                instance: true, // Gets CPU, RAM, Storage (InstanceTemplate)
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: {
+                createDate: "desc",
             },
         });
 
