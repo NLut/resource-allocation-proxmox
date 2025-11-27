@@ -66,7 +66,7 @@ export default function AdminViewRequest() {
             if (!res.ok) throw new Error("Failed to update");
 
             alert(`Request ${status} successfully!`);
-            router.push("/admin/requests"); // Redirect back to list
+            router.push("/admin"); // Redirect back to list
             router.refresh();
         } catch (error) {
             console.error(error);
