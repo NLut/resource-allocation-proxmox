@@ -5,18 +5,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 // ดึง mock data
-import { getUserInstances } from "../../mock-data/requestService";
+import { getUserInstances } from "../../mock-data/instanceService";
 
 export default function ViewUserInstancePage() {
   const router = useRouter();
   const [instances, setInstances] = useState<any[]>([]);
 
   useEffect(() => {
-    async function load() {
-      const data = await getUserInstances();
-      setInstances(data);
-    }
-    load();
+    const data = getUserInstances();   // ⭐ ไม่ต้อง await
+    setInstances(data);
   }, []);
 
   const badgeStyle = (status: string) => {
@@ -47,7 +44,7 @@ export default function ViewUserInstancePage() {
           </span>
         </div>
 
-        {/* ❌ ไม่มีปุ่ม create */}
+        {/* Right Placeholder */}
         <div></div>
       </div>
 

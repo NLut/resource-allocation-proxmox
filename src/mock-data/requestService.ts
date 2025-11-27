@@ -28,7 +28,7 @@ export function saveNewRequest(payload: any) {
     status: "Pending",
     date: new Date().toISOString().slice(0, 10),
 
-    // ⭐ เพิ่ม Instance Name ให้รองรับ UI ใหม่
+    // ⭐ รองรับชื่อ Instance
     instanceName: payload.instanceName || payload.name || "-",
 
     ...payload,
@@ -43,16 +43,23 @@ export function saveNewRequest(payload: any) {
 // ============================
 // อัปเดตสถานะของ request (Approve / Reject)
 // ============================
+// ⭐ แก้ให้ return request ที่ถูกอัปเดต (สำคัญมาก)
 export function updateRequestStatus(id: string, status: string) {
   const list = getRequestInstances();
 
-  const updated = list.map((req: any) =>
-    req.id.toString() === id.toString()
-      ? { ...req, status }
-      : req
-  );
+  let updatedReq: any = null;
 
-  localStorage.setItem("mockRequests", JSON.stringify(updated));
+  const updatedList = list.map((req: any) => {
+    if (req.id.toString() === id.toString()) {
+      updatedReq = { ...req, status };
+      return updatedReq;
+    }
+    return req;
+  });
+
+  localStorage.setItem("mockRequests", JSON.stringify(updatedList));
+
+  return updatedReq;  // ⭐ ต้อง return
 }
 
 // ============================
@@ -66,8 +73,6 @@ export function updateRequest(id: string, newData: any) {
       ? {
           ...req,
           ...newData,
-
-          // ⭐ บังคับให้มี instanceName เสมอ
           instanceName:
             newData.instanceName ||
             newData.name ||
@@ -91,14 +96,13 @@ export function getUserInstances() {
 
 // เพิ่ม Instance เมื่อ Admin กด Approve
 export function addUserInstance(req: any) {
+  if (!req) return; // ⭐ ป้องกัน crash ถ้า req undefined
+
   const list = getUserInstances();
 
   const newInstance = {
     id: Date.now(),
-
-    // ใช้ชื่อจาก request ที่ user กรอกไว้
     name: req.instanceName || req.name || "Unnamed-Instance",
-
     os: req.os,
     cpu: req.spec?.cpu,
     ram: req.spec?.ram,
@@ -109,4 +113,6 @@ export function addUserInstance(req: any) {
   list.push(newInstance);
 
   localStorage.setItem("userInstances", JSON.stringify(list));
+
+  return newInstance;  // ⭐ optional แต่ดีต่อการ debug
 }

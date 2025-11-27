@@ -14,19 +14,21 @@ import { addUserInstance } from "../../../mock-data/instanceService";
 export default function AdminViewRequest() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id;
+  const id = params.id as string;
 
   const [data, setData] = useState<any>(null);
 
   useEffect(() => {
-    async function load() {
-      const result = await getRequestById(id as string);
-      setData(result);
-    }
-    load();
+    console.log("🟦 URL PARAM id =", id);
+
+    const result = getRequestById(id);
+    console.log("🟦 getRequestById() =", result);
+
+    setData(result);
   }, [id]);
 
   if (!data) {
+    console.log("❌ data is null — request not found");
     return (
       <div className="min-h-screen bg-[#f4f2ff] flex items-center justify-center">
         <p className="text-gray-600 text-xl">Loading...</p>
@@ -34,15 +36,44 @@ export default function AdminViewRequest() {
     );
   }
 
+  // =====================
+  // APPROVE
+  // =====================
   const handleApprove = () => {
-    updateRequestStatus(id as string, "Approved");
-    addUserInstance(data);
+    console.log("🟧 Approve clicked");
+
+    // ได้ request หลังอัปเดตจริง
+    const updatedReq = updateRequestStatus(id, "Approved");
+    console.log("🟧 updatedReq returned =", updatedReq);
+
+    if (!updatedReq) {
+      console.log("❌ updatedReq is NULL → updateRequestStatus failed");
+    }
+
+    if (updatedReq) {
+      const inst = addUserInstance(updatedReq);
+      console.log("🟩 addUserInstance RESULT =", inst);
+    }
+
+    // เช็ก localStorage หลังสร้าง instance
+    const check = localStorage.getItem("userInstances");
+    console.log("🟦 localStorage.userInstances =", check);
+
     router.push("/admin");
+    router.refresh();
   };
 
+  // =====================
+  // REJECT
+  // =====================
   const handleReject = () => {
-    updateRequestStatus(id as string, "Rejected");
+    console.log("🟥 Reject clicked");
+
+    const updatedReq = updateRequestStatus(id, "Rejected");
+    console.log("🟥 updatedReq returned =", updatedReq);
+
     router.push("/admin");
+    router.refresh();
   };
 
   return (
@@ -93,10 +124,8 @@ export default function AdminViewRequest() {
             </thead>
 
             <tbody>
-
-              {/* CPU row */}
               <tr className="border-b border-purple-200">
-                <td className="py-4">{data.name}</td>
+                <td className="py-4">{data.instanceName || data.name}</td>
                 <td className="py-4">{data.os}</td>
                 <td className="py-4">{data.spec?.cpu}</td>
 
@@ -108,7 +137,6 @@ export default function AdminViewRequest() {
                 </td>
               </tr>
 
-              {/* RAM row with End Date */}
               <tr className="border-b border-purple-200">
                 <td className="py-4"></td>
                 <td className="py-4"></td>
@@ -122,7 +150,6 @@ export default function AdminViewRequest() {
                 </td>
               </tr>
 
-              {/* Storage row */}
               <tr>
                 <td className="py-4"></td>
                 <td className="py-4"></td>
@@ -132,7 +159,6 @@ export default function AdminViewRequest() {
 
             </tbody>
           </table>
-
 
           </div>
 
