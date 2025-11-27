@@ -4,21 +4,59 @@ import { useEffect, useState } from "react";
 import { Home, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { getRequestInstances } from "../../mock-data/requestService";
-
 export default function RequestListPage() {
   const router = useRouter();
   const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
-      const data = await getRequestInstances();
+      try {
+        const res = await fetch("/api/user/requests", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
 
-      // ❗ แสดงเฉพาะ Pending + Rejected (ไม่รวม Approved)
-      const filtered = data.filter((item: any) => item.status !== "Approved");
+        if (!res.ok) {
+          console.error("Failed to fetch user requests:", await res.text());
+          return;
+        }
 
-      setRequests(filtered);
+        const data = await res.json();
+
+        // ================= MAP =================================
+        const mapped = data.map((item: any) => ({
+          // ✔ Request ID ที่ถูกต้องตาม API = requestId
+          requestId: item.requestId,
+
+          // ✔ Instance name
+          name: item.instantName ?? item.instances?.name ?? "-",
+
+          // ตอนนี้ระบบรองรับเฉพาะ Create
+          type: "Create",
+
+          date: new Date(item.requestDate).toLocaleDateString(),
+
+          status:
+            item.requestStatus === "pending"
+              ? "Pending"
+              : item.requestStatus === "rejected"
+              ? "Rejected"
+              : "Approved",
+        }));
+
+        const filtered = mapped.filter(
+          (item: any) => item.status !== "Approved"
+        );
+
+        setRequests(filtered);
+      } catch (error) {
+        console.error("Error loading requests:", error);
+      } finally {
+        setLoading(false);
+      }
     }
+
     loadData();
   }, []);
 
@@ -35,21 +73,18 @@ export default function RequestListPage() {
 
   return (
     <div className="min-h-screen bg-[#f4f2ff] text-gray-700">
-
-      {/* ---------------- HEADER (HOME) ---------------- */}
+      {/* HEADER */}
       <div className="bg-[#d5c8ff] px-6 py-4 flex items-center gap-3 shadow">
         <div
           className="flex items-center gap-3 cursor-pointer"
           onClick={() => router.push("/dashboard")}
         >
           <Home size={26} className="text-gray-700" />
-          <span className="text-xl font-semibold text-gray-800">
-            Home
-          </span>
+          <span className="text-xl font-semibold text-gray-800">Home</span>
         </div>
       </div>
 
-      {/* ---------------- REQUEST LIST + CREATE ---------------- */}
+      {/* TITLE + BUTTON */}
       <div className="flex justify-between items-center mt-8 mb-6 px-10">
         <h2 className="text-3xl font-semibold text-gray-800">Request List</h2>
 
@@ -62,68 +97,72 @@ export default function RequestListPage() {
         </button>
       </div>
 
-      {/* ---------------- TABLE ---------------- */}
+      {/* TABLE */}
       <div className="px-10">
         <div className="bg-white rounded-3xl p-6 shadow-sm">
           <div className="max-h-96 overflow-y-auto custom-scrollbar">
-            <table className="w-full border-collapse">
-              <thead className="sticky top-0 bg-white">
-                <tr className="text-left text-gray-600 border-b border-purple-200">
-                  <th className="pb-3">Instance ID</th>
-                  <th className="pb-3">Instance Name</th>
-                  <th className="pb-3">Request Type</th>
-                  <th className="pb-3">Date</th>
-                  <th className="pb-3">Status</th>
-                  <th className="pb-3">Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {requests.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-6 text-gray-400">
-                      No requests found.
-                    </td>
+            {loading ? (
+              <p className="text-center py-6 text-gray-400">Loading...</p>
+            ) : (
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 bg-white">
+                  <tr className="text-left text-gray-600 border-b border-purple-200">
+                    <th className="pb-3">Request ID</th>
+                    <th className="pb-3">Instance Name</th>
+                    <th className="pb-3">Request Type</th>
+                    <th className="pb-3">Date</th>
+                    <th className="pb-3">Status</th>
+                    <th className="pb-3">Action</th>
                   </tr>
-                ) : (
-                  requests.map((item) => (
-                    <tr key={item.id} className="border-b border-purple-100">
-                      <td className="py-4">{item.id}</td>
+                </thead>
 
-                      <td>{item.name ?? "-"}</td>
-
-                      <td>{item.type}</td>
-                      <td>{item.date}</td>
-
-                      <td>
-                        <span
-                          className={`px-4 py-1 rounded-full text-sm ${badgeStyle(
-                            item.status
-                          )}`}
-                        >
-                          {item.status}
-                        </span>
-                      </td>
-
-                      <td>
-                        <button
-                          onClick={() => router.push(`/edit-request/${item.id}`)}
-                          className="px-4 py-1 bg-[#bdb7d3] hover:bg-[#a9a3c4] transition rounded-full text-gray-700"
-                        >
-                          Edit
-                        </button>
+                <tbody>
+                  {requests.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="text-center py-6 text-gray-400">
+                        No requests found.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
+                  ) : (
+                    requests.map((item, index) => (
+                      <tr
+                        key={`${item.requestId}-${index}`} // ✔ guaranteed unique
+                        className="border-b border-purple-100"
+                      >
+                        <td className="py-4">{item.requestId}</td>
+                        <td>{item.name}</td>
+                        <td>{item.type}</td>
+                        <td>{item.date}</td>
 
-            </table>
+                        <td>
+                          <span
+                            className={`px-4 py-1 rounded-full text-sm ${badgeStyle(
+                              item.status
+                            )}`}
+                          >
+                            {item.status}
+                          </span>
+                        </td>
+
+                        <td>
+                          <button
+                            onClick={() =>
+                              router.push(`/edit-request/${item.requestId}`)
+                            }
+                            className="px-4 py-1 bg-[#bdb7d3] hover:bg-[#a9a3c4] transition rounded-full text-gray-700"
+                          >
+                            Edit
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </div>
-
     </div>
   );
 }
-
