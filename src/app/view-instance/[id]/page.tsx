@@ -1,221 +1,276 @@
 "use client";
 
-import { Home, Eye, EyeOff, Copy } from "lucide-react";
+import { Home, Eye, EyeOff, Copy, Server, Activity } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getInstanceById, updateInstanceStatus } from "../../../mock-data/instanceService";
 
 export default function ViewInstancePage() {
-  const params = useParams();
-  const router = useRouter();
+    const params = useParams();
+    const router = useRouter();
 
-  const rawId = params.id;
+    // Handle ID parsing safely
+    const rawId = params.id;
+    const instanceId = Array.isArray(rawId) ? rawId[0] : rawId;
 
-  let instanceId: string;
+    const [data, setData] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+    const [toggling, setToggling] = useState(false);
 
-  if (typeof rawId === "string") {
-    instanceId = rawId;
-  } else if (Array.isArray(rawId)) {
-    instanceId = rawId[0] ?? "";
-  } else {
-    instanceId = "";
-  }
+    // Modal states
+    const [showModal, setShowModal] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [copyLabel, setCopyLabel] = useState("Copy");
 
+    // 1. Fetch Data from API
+    useEffect(() => {
+        if (!instanceId) return;
 
-  const [data, setData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+        async function load() {
+            try {
+                const res = await fetch(`/api/user/instances/${instanceId}`);
 
-  // Modal states
-  const [showModal, setShowModal] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [copyLabel, setCopyLabel] = useState("Copy");
+                if (!res.ok) {
+                    if (res.status === 404) alert("Instance not found");
+                    router.push("/dashboard");
+                    return;
+                }
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const inst = await getInstanceById(instanceId);
-        setData(inst);
-      } catch (e) {
-        console.error("Error:", e);
-      } finally {
-        setLoading(false);
-      }
+                const raw = await res.json();
+
+                // Map DB structure to UI structure
+                setData({
+                    id: raw.instanceId,
+                    name: raw.request?.instantName || "Unknown",
+                    os: raw.request?.template?.osTemplate?.osName || "Unknown OS",
+                    cpu: `${raw.request?.template?.instance?.cpuAmount} vCPU`,
+                    ram: `${(raw.request?.template?.instance?.ramAmount / 1024).toFixed(1)} GB`,
+                    storage: `${raw.request?.template?.instance?.storageAmount} GB`,
+                    username: raw.username,
+                    password: raw.password,
+                    // Map "Running"/"Stopped" to "On"/"Off" for UI logic
+                    status: raw.machineState === "Running" ? "On" : "Off",
+                });
+            } catch (e) {
+                console.error("Error:", e);
+            } finally {
+                setLoading(false);
+            }
+        }
+        load();
+    }, [instanceId, router]);
+
+    // 2. Toggle Status API Call
+    const toggleStatus = async () => {
+        if (toggling || !data) return;
+        setToggling(true);
+
+        const newStatusUI = data.status === "On" ? "Off" : "On";
+        const newStatusDB = data.status === "On" ? "Stopped" : "Running"; // Map back to DB value
+
+        try {
+            const res = await fetch(`/api/user/instances/${instanceId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: newStatusDB }),
+            });
+
+            if (!res.ok) throw new Error("Failed to update");
+
+            // Update UI optimistically
+            setData((prev: any) => ({ ...prev, status: newStatusUI }));
+        } catch (error) {
+            alert("Failed to toggle status");
+            console.error(error);
+        } finally {
+            setToggling(false);
+        }
+    };
+
+    const copyUsername = async () => {
+        if (!data?.username) return;
+        await navigator.clipboard.writeText(data.username);
+        setCopyLabel("Copied!");
+        setTimeout(() => setCopyLabel("Copy"), 1500);
+    };
+
+    if (loading) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center bg-[#f4f2ff] text-gray-500">
+                <div className="mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-purple-600"></div>
+                <p className="text-xl">Loading Instance #{instanceId}...</p>
+            </div>
+        );
     }
-    load();
-  }, [instanceId]);
 
-  const toggleStatus = () => {
-    const newStatus = data.status === "On" ? "Off" : "On";
-    updateInstanceStatus(Number(instanceId), newStatus);
+    if (!data) return null;
 
-    setData((prev: any) => ({ ...prev, status: newStatus }));
-  };
-
-  const copyUsername = async () => {
-    await navigator.clipboard.writeText(data.username);
-    setCopyLabel("Copied!");
-    setTimeout(() => setCopyLabel("Copy"), 1500);
-  };
-
-  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-2xl">
-        Loading...
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#f4f2ff]">
-      
-      {/* NAVBAR */}
-      <div className="w-full bg-[#cfc2ff] px-6 py-4 flex items-center gap-3 shadow">
-        <Home size={26} className="text-gray-700" />
-        <span
-          onClick={() => router.push("/dashboard")}
-          className="text-xl cursor-pointer font-semibold text-gray-800"
-        >
-          Home
-        </span>
-      </div>
-
-      {/* CONTENT */}
-      <div className="px-16 pt-12 pb-10">
-        <h1 className="text-4xl font-semibold text-gray-900 mb-10">
-          View Instance #{instanceId}
-        </h1>
-
-        <div className="bg-[#e8defc] px-12 py-12 rounded-3xl shadow-xl w-full max-w-5xl mx-auto">
-
-          {/* OS */}
-          <p className="text-2xl font-semibold text-black">Operation System</p>
-          <div className="w-full bg-white px-6 py-4 rounded-xl shadow-md text-black mb-10">
-            {data.os}
-          </div>
-
-          {/* SPEC TABLE */}
-          <p className="text-2xl font-semibold text-black mb-3">Spec:</p>
-
-          <div className="bg-white rounded-3xl shadow-md p-6">
-            <table className="w-full text-gray-700">
-              <tbody>
-                <tr className="border-b">
-                  <td className="py-3 font-semibold">Instance Name</td>
-                  <td>{data.name}</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="py-3 font-semibold">CPU</td>
-                  <td>{data.cpu}</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="py-3 font-semibold">RAM</td>
-                  <td>{data.ram}</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="py-3 font-semibold">Storage</td>
-                  <td>{data.storage}</td>
-                </tr>
-
-                <tr className="border-b">
-                  <td className="py-3 font-semibold">Status</td>
-                  <td>
-                    <button
-                      onClick={toggleStatus}
-                      className={`px-6 py-2 rounded-full text-white transition
-                        ${data.status === "On" ? "bg-green-500" : "bg-gray-500"}
-                      `}
-                    >
-                      {data.status === "On"
-                        ? "On (Click to turn Off)"
-                        : "Off (Click to turn On)"}
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* VIEW PASSWORD */}
-          <div className="flex justify-end mt-10">
-            <button
-              onClick={() => setShowModal(true)}
-              className="px-10 py-3 bg-[#7d5fff] hover:bg-[#6d52f7] rounded-full text-white text-xl font-medium shadow-lg"
-            >
-              View Password
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* MODAL POPUP */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-3xl shadow-2xl w-[430px] p-8">
-
-            <h2 className="text-3xl font-semibold text-center text-black mb-8">
-              View Password
-            </h2>
-
-            {/* Instance */}
-            <div className="mb-6">
-              <p className="font-semibold mb-1 text-black">Instance</p>
-              <div className="bg-gray-100 px-4 py-3 text-black rounded-xl">
-                {data.name}
-              </div>
-            </div>
-
-            {/* Username */}
-            <div className="mb-6">
-              <p className="font-semibold text-black mb-1">Username</p>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-gray-100 px-4 py-3 rounded-xl text-black">
-                  {data.username}
+        <div className="min-h-screen bg-[#f4f2ff] font-sans">
+            {/* NAVBAR */}
+            <div className="flex w-full items-center gap-3 bg-[#cfc2ff] px-6 py-4 shadow">
+                <div
+                    onClick={() => router.push("/dashboard")}
+                    className="flex cursor-pointer items-center gap-2 transition hover:opacity-80"
+                >
+                    <Home size={26} className="text-gray-700" />
+                    <span className="text-xl font-semibold text-gray-800">Home</span>
                 </div>
-                <button
-                  onClick={copyUsername}
-                  className="flex items-center gap-1 px-3 py-2 rounded-xl bg-[#7d5fff] hover:bg-[#6d52f7] transition text-white"
-                >
-                  <Copy size={16} />
-                  {copyLabel}
-                </button>
-              </div>
             </div>
 
-            {/* Password */}
-            <div className="mb-8">
-              <p className="font-semibold mb-1 text-black">Password</p>
-              <div className="flex items-center bg-gray-100 px-4 py-3 rounded-xl">
-                <span className="flex-1 text-black">
-                  {showPassword ? data.password : "••••••••"}
-                </span>
+            {/* CONTENT */}
+            <div className="px-4 pt-12 pb-10 md:px-16">
+                <div className="mb-10 flex items-center gap-4">
+                    <div className="rounded-xl bg-purple-100 p-3">
+                        <Server size={32} className="text-purple-600" />
+                    </div>
+                    <h1 className="text-4xl font-semibold text-gray-900">
+                        View Instance #{instanceId}
+                    </h1>
+                </div>
 
-                <button
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="p-1 rounded-full hover:bg-gray-200"
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} className="text-black" />
-                  ) : (
-                    <Eye size={20} className="text-black" />
-                  )}
-                </button>
-              </div>
+                <div className="mx-auto w-full max-w-5xl rounded-3xl bg-[#e8defc] px-8 py-12 shadow-xl md:px-12">
+                    {/* OS */}
+                    <p className="mb-2 text-2xl font-semibold text-black">
+                        Operating System
+                    </p>
+                    <div className="mb-10 flex w-full items-center gap-3 rounded-xl bg-white px-6 py-4 text-lg text-black shadow-md">
+                        {data.os.toLowerCase().includes("windows") ? "🪟" : "🐧"} {data.os}
+                    </div>
+
+                    {/* SPEC TABLE */}
+                    <p className="mb-3 text-2xl font-semibold text-black">
+                        Specifications
+                    </p>
+
+                    <div className="overflow-hidden rounded-3xl bg-white p-6 shadow-md">
+                        <table className="w-full text-lg text-gray-700">
+                            <tbody>
+                                <tr className="border-b border-gray-100">
+                                    <td className="w-1/3 py-4 font-semibold">Instance Name</td>
+                                    <td className="py-4">{data.name}</td>
+                                </tr>
+
+                                <tr className="border-b border-gray-100">
+                                    <td className="py-4 font-semibold">CPU</td>
+                                    <td className="py-4">{data.cpu}</td>
+                                </tr>
+
+                                <tr className="border-b border-gray-100">
+                                    <td className="py-4 font-semibold">RAM</td>
+                                    <td className="py-4">{data.ram}</td>
+                                </tr>
+
+                                <tr className="border-b border-gray-100">
+                                    <td className="py-4 font-semibold">Storage</td>
+                                    <td className="py-4">{data.storage}</td>
+                                </tr>
+
+                                <tr>
+                                    <td className="py-4 font-semibold">Status</td>
+                                    <td className="py-4">
+                                        <button
+                                            onClick={toggleStatus}
+                                            disabled={toggling}
+                                            className={`flex items-center gap-2 rounded-full px-8 py-2 font-medium text-white shadow-sm transition ${data.status === "On"
+                                                ? "bg-green-500 hover:bg-green-600"
+                                                : "bg-gray-500 hover:bg-gray-600"
+                                                } ${toggling ? "cursor-not-allowed opacity-70" : ""} `}
+                                        >
+                                            {toggling ? (
+                                                "Updating..."
+                                            ) : data.status === "On" ? (
+                                                <>
+                                                    <Activity size={18} className="animate-pulse" />{" "}
+                                                    Running (Turn Off)
+                                                </>
+                                            ) : (
+                                                "Stopped (Turn On)"
+                                            )}
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* VIEW PASSWORD */}
+                    <div className="mt-10 flex justify-end">
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="transform rounded-full bg-[#7d5fff] px-10 py-3 text-xl font-medium text-white shadow-lg transition hover:scale-105 hover:bg-[#6d52f7]"
+                        >
+                            View Password
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            {/* Close Button */}
-            <button
-              onClick={() => setShowModal(false)}
-              className="w-full py-3 bg-[#7d5fff] hover:bg-[#6d52f7] text-white rounded-full text-lg font-medium"
-            >
-              Close
-            </button>
+            {/* MODAL POPUP */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+                    <div className="animate-in fade-in zoom-in w-full max-w-[430px] rounded-3xl bg-white p-8 shadow-2xl duration-200">
+                        <h2 className="mb-8 text-center text-3xl font-semibold text-black">
+                            Access Credentials
+                        </h2>
 
-          </div>
+                        {/* Instance */}
+                        <div className="mb-6">
+                            <p className="mb-2 text-sm font-semibold tracking-wider text-gray-500 uppercase">
+                                Instance
+                            </p>
+                            <div className="rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 font-medium text-black">
+                                {data.name}
+                            </div>
+                        </div>
+
+                        {/* Username */}
+                        <div className="mb-6">
+                            <p className="mb-2 text-sm font-semibold tracking-wider text-gray-500 uppercase">
+                                Username
+                            </p>
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 font-medium text-black">
+                                    {data.username}
+                                </div>
+                                <button
+                                    onClick={copyUsername}
+                                    className="flex items-center gap-1 rounded-xl bg-[#7d5fff] px-4 py-3 text-white shadow-sm transition hover:bg-[#6d52f7]"
+                                >
+                                    <Copy size={18} />
+                                    <span className="text-sm font-medium">{copyLabel}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Password */}
+                        <div className="mb-8">
+                            <p className="mb-2 text-sm font-semibold tracking-wider text-gray-500 uppercase">
+                                Password
+                            </p>
+                            <div className="flex items-center rounded-xl border border-gray-200 bg-gray-100 px-4 py-3">
+                                <span className="flex-1 font-mono font-medium text-black">
+                                    {showPassword ? data.password : "••••••••••••"}
+                                </span>
+
+                                <button
+                                    onClick={() => setShowPassword((prev) => !prev)}
+                                    className="rounded-full p-2 text-gray-600 transition hover:bg-gray-200"
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Close Button */}
+                        <button
+                            onClick={() => setShowModal(false)}
+                            className="w-full rounded-full bg-[#7d5fff] py-3 text-lg font-medium text-white shadow-md transition hover:bg-[#6d52f7]"
+                        >
+                            Close
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 }
