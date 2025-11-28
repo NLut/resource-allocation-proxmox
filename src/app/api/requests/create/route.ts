@@ -3,13 +3,16 @@ import { db } from "~/server/db";
 import { auth } from "~/server/auth";
 import { z } from "zod";
 
-// Input Validation Schema
+// 1. Update Schema to accept dates
 const CreateRequestSchema = z.object({
-    instanceTemplateId: z.number(), // The hardware they picked
-    osTemplateId: z.number(), // The OS they picked
+    instanceTemplateId: z.number(),
+    osTemplateId: z.number(),
     instantName: z.string().min(3),
     note: z.string().optional(),
-    // Assuming defaults for dates, or you can accept them from frontend
+    
+    // ⭐ NEW: Accept date strings (from frontend calendar) and convert to Date objects
+    startDate: z.coerce.date(),
+    endDate: z.coerce.date(),
 });
 
 export async function POST(req: Request) {
@@ -19,15 +22,18 @@ export async function POST(req: Request) {
     try {
         const body = await req.json();
 
-        // Validate Input
-        const { instanceTemplateId, osTemplateId, instantName, note } =
-            CreateRequestSchema.parse(body);
+        // 2. Extract dates from the validated body
+        const { 
+            instanceTemplateId, 
+            osTemplateId, 
+            instantName, 
+            note, 
+            startDate, 
+            endDate 
+        } = CreateRequestSchema.parse(body);
 
-        //  Start Transaction -> transaction like database transaction
-        //  db is prismaClient
         const newRequest = await db.$transaction(async (tx) => {
-            // 1. Create the Link (InstanceOsTemplate)
-            // This records "User wanted Ubuntu on Small Instance"
+            // Create the Link (InstanceOsTemplate)
             const newCombo = await tx.instanceOsTemplate.create({
                 data: {
                     instanceId: instanceTemplateId,
@@ -35,20 +41,21 @@ export async function POST(req: Request) {
                 },
             });
 
-            // 2. Create the Request using the ID from step 1
+            // Create the Request
             const request = await tx.requestInfo.create({
                 data: {
                     userId: session.user.id,
-                    templateId: newCombo.templateId, //  Link to the specific combo
+                    templateId: newCombo.templateId,
                     instantName: instantName,
                     requestStatus: "pending",
                     isApprove: false,
                     note: note ?? "",
 
-                    // Setting dates (Example logic: starts now, ends in 7 days)
-                    requestDate: new Date(),
-                    lastEditDate: new Date(),
-                    endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    // ⭐ NEW: Use the user-provided dates
+                    requestDate: startDate, // The Start Date
+                    endDate: endDate,       // The End Date
+                    
+                    lastEditDate: new Date(), // This is still "now" (audit log)
                 },
             });
 
@@ -59,7 +66,7 @@ export async function POST(req: Request) {
     } catch (error) {
         console.error("Request Creation Failed:", error);
         if (error instanceof z.ZodError) {
-            return new NextResponse("Invalid Data", { status: 400 });
+            return new NextResponse("Invalid Data: " + JSON.stringify(error.errors), { status: 400 });
         }
         return new NextResponse("Internal Server Error", { status: 500 });
     }

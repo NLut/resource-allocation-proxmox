@@ -13,20 +13,28 @@ export async function GET() {
     try {
         const pendingRequests = await db.requestInfo.findMany({
             where: {
-                requestStatus: "pending", // 👈 Filter only pending
+                requestStatus: "pending",
                 isApprove: false,
             },
+            // ⭐ UPDATED INCLUDE STRUCTURE
             include: {
                 user: true, // See WHO requested it
-                template: true, // See WHAT they requested
+                template: {
+                    // 1. Go to the Combo Table (InstanceOsTemplate)
+                    include: {
+                        osTemplate: true, // 2. Drill down to get OS Name
+                        instance: true, // 3. Drill down to get CPU/RAM (InstanceTemplate)
+                    },
+                },
             },
             orderBy: {
-                requestDate: "asc", // Oldest requests first
+                requestDate: "asc",
             },
         });
 
         return NextResponse.json(pendingRequests);
     } catch (error) {
+        console.error(error);
         return new NextResponse("Internal Server Error", { status: 500 });
     }
 }

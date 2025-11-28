@@ -93,14 +93,6 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
   Serializable: 'Serializable'
 });
 
-exports.Prisma.PostScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  createdById: 'createdById'
-};
-
 exports.Prisma.AccountScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -113,8 +105,7 @@ exports.Prisma.AccountScalarFieldEnum = {
   token_type: 'token_type',
   scope: 'scope',
   id_token: 'id_token',
-  session_state: 'session_state',
-  refresh_token_expires_in: 'refresh_token_expires_in'
+  session_state: 'session_state'
 };
 
 exports.Prisma.SessionScalarFieldEnum = {
@@ -124,23 +115,103 @@ exports.Prisma.SessionScalarFieldEnum = {
   expires: 'expires'
 };
 
-exports.Prisma.UserScalarFieldEnum = {
-  id: 'id',
-  name: 'name',
-  email: 'email',
-  emailVerified: 'emailVerified',
-  image: 'image'
-};
-
 exports.Prisma.VerificationTokenScalarFieldEnum = {
   identifier: 'identifier',
   token: 'token',
   expires: 'expires'
 };
 
+exports.Prisma.UserScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  emailVerified: 'emailVerified',
+  image: 'image',
+  role: 'role',
+  createDate: 'createDate'
+};
+
+exports.Prisma.PostScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdById: 'createdById'
+};
+
+exports.Prisma.RequestInfoScalarFieldEnum = {
+  requestId: 'requestId',
+  userId: 'userId',
+  templateId: 'templateId',
+  instantName: 'instantName',
+  requestStatus: 'requestStatus',
+  requestDate: 'requestDate',
+  endDate: 'endDate',
+  lastEditDate: 'lastEditDate',
+  note: 'note',
+  isApprove: 'isApprove'
+};
+
+exports.Prisma.RequestEditLogScalarFieldEnum = {
+  logNo: 'logNo',
+  userId: 'userId',
+  requestId: 'requestId',
+  jsonData: 'jsonData',
+  timestamp: 'timestamp'
+};
+
+exports.Prisma.InstanceTemplateScalarFieldEnum = {
+  instanceId: 'instanceId',
+  name: 'name',
+  cpuAmount: 'cpuAmount',
+  ramAmount: 'ramAmount',
+  gpuAmount: 'gpuAmount',
+  storageAmount: 'storageAmount'
+};
+
+exports.Prisma.OsTemplateScalarFieldEnum = {
+  osId: 'osId',
+  osName: 'osName',
+  imageLocation: 'imageLocation',
+  supportedPlatform: 'supportedPlatform'
+};
+
+exports.Prisma.InstanceOsTemplateScalarFieldEnum = {
+  templateId: 'templateId',
+  osId: 'osId',
+  instanceId: 'instanceId'
+};
+
+exports.Prisma.InstanceInfoScalarFieldEnum = {
+  instanceId: 'instanceId',
+  userId: 'userId',
+  requestId: 'requestId',
+  username: 'username',
+  password: 'password',
+  machineState: 'machineState',
+  ipAddr: 'ipAddr',
+  createDate: 'createDate',
+  expireDate: 'expireDate',
+  updateBy: 'updateBy',
+  updateDate: 'updateDate'
+};
+
+exports.Prisma.NotificationInfoScalarFieldEnum = {
+  notificationId: 'notificationId',
+  requestId: 'requestId',
+  sendDate: 'sendDate',
+  isSend: 'isSend',
+  messageSubject: 'messageSubject',
+  message: 'message'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
+};
+
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
 };
 
 exports.Prisma.QueryMode = {
@@ -153,13 +224,26 @@ exports.Prisma.NullsOrder = {
   last: 'last'
 };
 
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
 
 exports.Prisma.ModelName = {
-  Post: 'Post',
   Account: 'Account',
   Session: 'Session',
+  VerificationToken: 'VerificationToken',
   User: 'User',
-  VerificationToken: 'VerificationToken'
+  Post: 'Post',
+  RequestInfo: 'RequestInfo',
+  RequestEditLog: 'RequestEditLog',
+  InstanceTemplate: 'InstanceTemplate',
+  OsTemplate: 'OsTemplate',
+  InstanceOsTemplate: 'InstanceOsTemplate',
+  InstanceInfo: 'InstanceInfo',
+  NotificationInfo: 'NotificationInfo'
 };
 /**
  * Create the Client
@@ -172,7 +256,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "/Users/natapat/Documents/Project/proxmox/resource-allocation-proxmox/generated/prisma",
+      "value": "/Users/ryuto00/code/Project_year4/resource-allocation-proxmox/generated/prisma",
       "fromEnvVar": null
     },
     "config": {
@@ -186,7 +270,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "/Users/natapat/Documents/Project/proxmox/resource-allocation-proxmox/prisma/schema.prisma",
+    "sourceFilePath": "/Users/ryuto00/code/Project_year4/resource-allocation-proxmox/prisma/schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -208,13 +292,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below\n  // Further reading:\n  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema\n  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Post {\n  id        Int      @id @default(autoincrement())\n  name      String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n\n  createdBy   User   @relation(fields: [createdById], references: [id])\n  createdById String\n\n  @@index([name])\n}\n\n// Necessary for Next auth\nmodel Account {\n  id                       String  @id @default(cuid())\n  userId                   String\n  type                     String\n  provider                 String\n  providerAccountId        String\n  refresh_token            String? // @db.Text\n  access_token             String? // @db.Text\n  expires_at               Int?\n  token_type               String?\n  scope                    String?\n  id_token                 String? // @db.Text\n  session_state            String?\n  user                     User    @relation(fields: [userId], references: [id], onDelete: Cascade)\n  refresh_token_expires_in Int?\n\n  @@unique([provider, providerAccountId])\n}\n\nmodel Session {\n  id           String   @id @default(cuid())\n  sessionToken String   @unique\n  userId       String\n  expires      DateTime\n  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n}\n\nmodel User {\n  id            String    @id @default(cuid())\n  name          String?\n  email         String?   @unique\n  emailVerified DateTime?\n  image         String?\n  accounts      Account[]\n  sessions      Session[]\n  posts         Post[]\n}\n\nmodel VerificationToken {\n  identifier String\n  token      String   @unique\n  expires    DateTime\n\n  @@unique([identifier, token])\n}\n",
-  "inlineSchemaHash": "dd9a6edd7dcf3768e8fd246695361ce51823871115a517c30ff53e4d5bffa20b",
+  "inlineSchema": "// schema.prisma\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"DATABASE_URL\")\n}\n\n/**\n * ============================================================\n * NEXTAUTH MODELS\n * (Standardized for Auth.js v5)\n * ============================================================\n */\n\nmodel Account {\n  id                String  @id @default(cuid())\n  userId            String  @map(\"user_id\")\n  type              String\n  provider          String\n  providerAccountId String  @map(\"provider_account_id\")\n  refresh_token     String? @db.Text\n  access_token      String? @db.Text\n  expires_at        Int?\n  token_type        String?\n  scope             String?\n  id_token          String? @db.Text\n  session_state     String?\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@unique([provider, providerAccountId])\n  @@map(\"accounts\")\n}\n\nmodel Session {\n  id           String   @id @default(cuid())\n  sessionToken String   @unique @map(\"session_token\")\n  userId       String   @map(\"user_id\")\n  expires      DateTime\n\n  user User @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@map(\"sessions\")\n}\n\nmodel VerificationToken {\n  identifier String\n  token      String   @unique\n  expires    DateTime\n\n  @@unique([identifier, token])\n  @@map(\"verification_tokens\")\n}\n\n/**\n * ============================================================\n * USER MODEL\n * (The bridge between Auth and Business Logic)\n * ============================================================\n */\n\nmodel User {\n  id            String    @id @default(cuid())\n  name          String?\n  email         String?   @unique\n  emailVerified DateTime? @map(\"email_verified\")\n  image         String?\n  role          String    @default(\"user\")\n  createDate    DateTime  @default(now()) @map(\"create_date\")\n\n  // Auth Relations\n  accounts Account[]\n  sessions Session[]\n\n  // Business Relations\n  posts     Post[]\n  requests  RequestInfo[]\n  instances InstanceInfo[]\n  editLogs  RequestEditLog[]\n\n  @@map(\"users\")\n}\n\n/**\n * ============================================================\n * POST MODEL\n * ============================================================\n */\n\nmodel Post {\n  id        Int      @id @default(autoincrement())\n  name      String\n  createdAt DateTime @default(now()) @map(\"created_at\")\n  updatedAt DateTime @updatedAt @map(\"updated_at\")\n\n  createdBy   User   @relation(fields: [createdById], references: [id])\n  createdById String @map(\"created_by_id\")\n\n  @@index([name])\n  @@map(\"posts\")\n}\n\n/**\n * ============================================================\n * BUSINESS MODELS\n * (Refactored: BigInt -> Int, snake_case -> camelCase)\n * ============================================================\n */\n\nmodel RequestInfo {\n  // Switched to Int to prevent Next.js client crashes\n  requestId     Int      @id @default(autoincrement()) @map(\"request_id\")\n  userId        String   @map(\"user_id\")\n  templateId    Int      @map(\"template_id\")\n  instantName   String   @map(\"instant_name\")\n  requestStatus String   @map(\"request_status\")\n  requestDate   DateTime @map(\"request_datetime\")\n  endDate       DateTime @map(\"end_datetime\")\n  lastEditDate  DateTime @map(\"last_edit_datetime\")\n  note          String\n  isApprove     Boolean  @map(\"is_approve\")\n\n  // Relations\n  user          User               @relation(fields: [userId], references: [id])\n  template      InstanceOsTemplate @relation(fields: [templateId], references: [templateId]) // Points to the Combo\n  notifications NotificationInfo[]\n  editLogs      RequestEditLog[]\n  instances     InstanceInfo[]\n\n  @@index([userId])\n  @@index([templateId])\n  @@map(\"request_info\")\n}\n\nmodel RequestEditLog {\n  logNo     Int      @id @default(autoincrement()) @map(\"log_no\")\n  userId    String   @map(\"user_id\")\n  requestId Int      @map(\"request_id\")\n  jsonData  Json     @map(\"json\") // Changed String -> Json\n  timestamp DateTime\n\n  user    User        @relation(fields: [userId], references: [id])\n  request RequestInfo @relation(fields: [requestId], references: [requestId])\n\n  @@index([userId])\n  @@index([requestId])\n  @@map(\"request_edit_log\")\n}\n\nmodel InstanceTemplate {\n  instanceId    Int    @id @default(autoincrement()) @map(\"instance_id\")\n  name          String\n  cpuAmount     Int    @map(\"cpu_amount\")\n  ramAmount     Int    @map(\"ram_amount\")\n  gpuAmount     Int    @map(\"gpu_amount\")\n  storageAmount Int    @map(\"storage_amount\")\n\n  osTemplates InstanceOsTemplate[]\n\n  @@map(\"instance_template\")\n}\n\nmodel OsTemplate {\n  osId              Int    @id @default(autoincrement()) @map(\"os_id\")\n  osName            String @map(\"os_name\")\n  imageLocation     String @map(\"image_location\")\n  supportedPlatform String @map(\"supported_platform\")\n\n  instancesOs InstanceOsTemplate[]\n\n  @@map(\"os_template\")\n}\n\nmodel InstanceOsTemplate {\n  templateId Int @id @default(autoincrement()) @map(\"template_id\")\n  osId       Int @map(\"os_id\")\n  instanceId Int @map(\"instance_id\")\n\n  osTemplate OsTemplate       @relation(fields: [osId], references: [osId])\n  instance   InstanceTemplate @relation(fields: [instanceId], references: [instanceId])\n  requests   RequestInfo[]\n\n  @@index([osId])\n  @@index([instanceId])\n  @@map(\"instance_os_template\")\n}\n\nmodel InstanceInfo {\n  instanceId   Int      @id @default(autoincrement()) @map(\"instance_id\")\n  userId       String   @map(\"user_id\")\n  requestId    Int      @map(\"request_id\")\n  username     String\n  password     String\n  machineState String   @map(\"machine_state\")\n  ipAddr       String   @map(\"ip_addr\")\n  createDate   DateTime @map(\"create_date\")\n  expireDate   DateTime @map(\"expire_date\")\n\n  // FIX: This must be String to hold a User ID (CUID)\n  updateBy   String   @map(\"update_by\")\n  updateDate DateTime @map(\"update_date\")\n\n  user    User        @relation(fields: [userId], references: [id])\n  request RequestInfo @relation(fields: [requestId], references: [requestId])\n\n  @@index([userId])\n  @@index([requestId])\n  @@map(\"instance_info\")\n}\n\nmodel NotificationInfo {\n  notificationId Int      @id @default(autoincrement()) @map(\"notification_id\")\n  requestId      Int      @map(\"request_id\")\n  sendDate       DateTime @map(\"send_date\")\n  isSend         Boolean  @map(\"is_send\")\n  messageSubject String   @map(\"message_subject\")\n  message        String\n\n  request RequestInfo @relation(fields: [requestId], references: [requestId])\n\n  @@index([requestId])\n  @@map(\"notification_info\")\n}\n",
+  "inlineSchemaHash": "a3230b4698c9291c74c3e2713cafd741f1470b917a1251a361f8d50026364e33",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Post\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"createdBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PostToUser\"},{\"name\":\"createdById\",\"kind\":\"scalar\",\"type\":\"String\"}],\"dbName\":null},\"Account\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"provider\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"providerAccountId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"refresh_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"access_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires_at\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"token_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scope\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"id_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"session_state\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"AccountToUser\"},{\"name\":\"refresh_token_expires_in\",\"kind\":\"scalar\",\"type\":\"Int\"}],\"dbName\":null},\"Session\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sessionToken\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"SessionToUser\"}],\"dbName\":null},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emailVerified\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"accounts\",\"kind\":\"object\",\"type\":\"Account\",\"relationName\":\"AccountToUser\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"SessionToUser\"},{\"name\":\"posts\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"PostToUser\"}],\"dbName\":null},\"VerificationToken\":{\"fields\":[{\"name\":\"identifier\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Account\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"user_id\"},{\"name\":\"type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"provider\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"providerAccountId\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"provider_account_id\"},{\"name\":\"refresh_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"access_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires_at\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"token_type\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"scope\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"id_token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"session_state\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"AccountToUser\"}],\"dbName\":\"accounts\"},\"Session\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"sessionToken\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"session_token\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"user_id\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"SessionToUser\"}],\"dbName\":\"sessions\"},\"VerificationToken\":{\"fields\":[{\"name\":\"identifier\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"expires\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":\"verification_tokens\"},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"emailVerified\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"email_verified\"},{\"name\":\"image\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createDate\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"create_date\"},{\"name\":\"accounts\",\"kind\":\"object\",\"type\":\"Account\",\"relationName\":\"AccountToUser\"},{\"name\":\"sessions\",\"kind\":\"object\",\"type\":\"Session\",\"relationName\":\"SessionToUser\"},{\"name\":\"posts\",\"kind\":\"object\",\"type\":\"Post\",\"relationName\":\"PostToUser\"},{\"name\":\"requests\",\"kind\":\"object\",\"type\":\"RequestInfo\",\"relationName\":\"RequestInfoToUser\"},{\"name\":\"instances\",\"kind\":\"object\",\"type\":\"InstanceInfo\",\"relationName\":\"InstanceInfoToUser\"},{\"name\":\"editLogs\",\"kind\":\"object\",\"type\":\"RequestEditLog\",\"relationName\":\"RequestEditLogToUser\"}],\"dbName\":\"users\"},\"Post\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"created_at\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"updated_at\"},{\"name\":\"createdBy\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"PostToUser\"},{\"name\":\"createdById\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"created_by_id\"}],\"dbName\":\"posts\"},\"RequestInfo\":{\"fields\":[{\"name\":\"requestId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"request_id\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"user_id\"},{\"name\":\"templateId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"template_id\"},{\"name\":\"instantName\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"instant_name\"},{\"name\":\"requestStatus\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"request_status\"},{\"name\":\"requestDate\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"request_datetime\"},{\"name\":\"endDate\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"end_datetime\"},{\"name\":\"lastEditDate\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"last_edit_datetime\"},{\"name\":\"note\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"isApprove\",\"kind\":\"scalar\",\"type\":\"Boolean\",\"dbName\":\"is_approve\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"RequestInfoToUser\"},{\"name\":\"template\",\"kind\":\"object\",\"type\":\"InstanceOsTemplate\",\"relationName\":\"InstanceOsTemplateToRequestInfo\"},{\"name\":\"notifications\",\"kind\":\"object\",\"type\":\"NotificationInfo\",\"relationName\":\"NotificationInfoToRequestInfo\"},{\"name\":\"editLogs\",\"kind\":\"object\",\"type\":\"RequestEditLog\",\"relationName\":\"RequestEditLogToRequestInfo\"},{\"name\":\"instances\",\"kind\":\"object\",\"type\":\"InstanceInfo\",\"relationName\":\"InstanceInfoToRequestInfo\"}],\"dbName\":\"request_info\"},\"RequestEditLog\":{\"fields\":[{\"name\":\"logNo\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"log_no\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"user_id\"},{\"name\":\"requestId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"request_id\"},{\"name\":\"jsonData\",\"kind\":\"scalar\",\"type\":\"Json\",\"dbName\":\"json\"},{\"name\":\"timestamp\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"RequestEditLogToUser\"},{\"name\":\"request\",\"kind\":\"object\",\"type\":\"RequestInfo\",\"relationName\":\"RequestEditLogToRequestInfo\"}],\"dbName\":\"request_edit_log\"},\"InstanceTemplate\":{\"fields\":[{\"name\":\"instanceId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"instance_id\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"cpuAmount\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"cpu_amount\"},{\"name\":\"ramAmount\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"ram_amount\"},{\"name\":\"gpuAmount\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"gpu_amount\"},{\"name\":\"storageAmount\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"storage_amount\"},{\"name\":\"osTemplates\",\"kind\":\"object\",\"type\":\"InstanceOsTemplate\",\"relationName\":\"InstanceOsTemplateToInstanceTemplate\"}],\"dbName\":\"instance_template\"},\"OsTemplate\":{\"fields\":[{\"name\":\"osId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"os_id\"},{\"name\":\"osName\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"os_name\"},{\"name\":\"imageLocation\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"image_location\"},{\"name\":\"supportedPlatform\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"supported_platform\"},{\"name\":\"instancesOs\",\"kind\":\"object\",\"type\":\"InstanceOsTemplate\",\"relationName\":\"InstanceOsTemplateToOsTemplate\"}],\"dbName\":\"os_template\"},\"InstanceOsTemplate\":{\"fields\":[{\"name\":\"templateId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"template_id\"},{\"name\":\"osId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"os_id\"},{\"name\":\"instanceId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"instance_id\"},{\"name\":\"osTemplate\",\"kind\":\"object\",\"type\":\"OsTemplate\",\"relationName\":\"InstanceOsTemplateToOsTemplate\"},{\"name\":\"instance\",\"kind\":\"object\",\"type\":\"InstanceTemplate\",\"relationName\":\"InstanceOsTemplateToInstanceTemplate\"},{\"name\":\"requests\",\"kind\":\"object\",\"type\":\"RequestInfo\",\"relationName\":\"InstanceOsTemplateToRequestInfo\"}],\"dbName\":\"instance_os_template\"},\"InstanceInfo\":{\"fields\":[{\"name\":\"instanceId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"instance_id\"},{\"name\":\"userId\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"user_id\"},{\"name\":\"requestId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"request_id\"},{\"name\":\"username\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"machineState\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"machine_state\"},{\"name\":\"ipAddr\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"ip_addr\"},{\"name\":\"createDate\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"create_date\"},{\"name\":\"expireDate\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"expire_date\"},{\"name\":\"updateBy\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"update_by\"},{\"name\":\"updateDate\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"update_date\"},{\"name\":\"user\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"InstanceInfoToUser\"},{\"name\":\"request\",\"kind\":\"object\",\"type\":\"RequestInfo\",\"relationName\":\"InstanceInfoToRequestInfo\"}],\"dbName\":\"instance_info\"},\"NotificationInfo\":{\"fields\":[{\"name\":\"notificationId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"notification_id\"},{\"name\":\"requestId\",\"kind\":\"scalar\",\"type\":\"Int\",\"dbName\":\"request_id\"},{\"name\":\"sendDate\",\"kind\":\"scalar\",\"type\":\"DateTime\",\"dbName\":\"send_date\"},{\"name\":\"isSend\",\"kind\":\"scalar\",\"type\":\"Boolean\",\"dbName\":\"is_send\"},{\"name\":\"messageSubject\",\"kind\":\"scalar\",\"type\":\"String\",\"dbName\":\"message_subject\"},{\"name\":\"message\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"request\",\"kind\":\"object\",\"type\":\"RequestInfo\",\"relationName\":\"NotificationInfoToRequestInfo\"}],\"dbName\":\"notification_info\"}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

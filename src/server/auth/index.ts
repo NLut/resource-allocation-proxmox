@@ -16,7 +16,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             if (user) {
                 token.id = user.id;
                 // We cast 'role' to string/any because TS might not know it exists on 'User' yet
-                // token.role = (user as any).role;
+                token.role = (user as any).role;
             }
             return token;
         },
@@ -36,7 +36,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // 3. SignIn Callback: The Admin Logic
         async signIn({ user }) {
             // Your specific admin email
-            const adminEmails = ["6522770617@g.siit.tu.ac.th"];
+            const adminEmails = [
+                "6522770617@g.siit.tu.ac.th",
+                "6522780624@g.siit.tu.ac.th",
+            ];
 
             if (user.email && adminEmails.includes(user.email)) {
                 try {
