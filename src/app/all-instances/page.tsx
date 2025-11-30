@@ -135,8 +135,8 @@ export default function ViewUserInstancePage() {
                                                 <td className="flex items-center gap-2 py-4 text-gray-600">
                                                     {/* Simple OS Icon Logic */}
                                                     {item.os.toLowerCase().includes("windows")
-                                                        ? "🪟"
-                                                        : "🐧"}{" "}
+                                                        ? ""
+                                                        : ""}{" "}
                                                     {item.os}
                                                 </td>
                                                 <td className="text-gray-600">{item.cpu} vCPU</td>
