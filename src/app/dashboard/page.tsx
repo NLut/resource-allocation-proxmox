@@ -47,7 +47,7 @@ export default function DashboardPage() {
         // 2. Process Requests (Top Table)
         // Filter out approved items (show only pending/rejected)
         const mappedRequests = reqRaw
-          .filter((item: any) => item.requestStatus !== "approved")
+          .filter((item: any) => item.requestStatus !== "created")
           .map((item: any) => ({
             id: item.requestId,
             name: item.instantName,

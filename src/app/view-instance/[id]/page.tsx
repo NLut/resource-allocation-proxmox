@@ -142,7 +142,7 @@ export default function ViewInstancePage() {
             Operating System
           </p>
           <div className="mb-10 flex w-full items-center gap-3 rounded-xl bg-white px-6 py-4 text-lg text-black shadow-md">
-            {data.os.toLowerCase().includes("windows") ? "🪟" : "🐧"} {data.os}
+            {data.os.toLowerCase().includes("windows") ? "" : ""} {data.os}
           </div>
 
           {/* SPEC TABLE */}
